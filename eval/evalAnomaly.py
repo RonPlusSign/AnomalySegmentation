@@ -84,6 +84,7 @@ def main():
         images = images.permute(0,3,1,2)
         with torch.no_grad():
             result = model(images)
+        print(f"result.squeeze(0).data.cpu().numpy() : {result.squeeze(0).data.cpu().numpy()}") #debug
         anomaly_result = 1.0 - np.max(result.squeeze(0).data.cpu().numpy(), axis=0)            
         pathGT = path.replace("images", "labels_masks")                
         if "RoadObsticle21" in pathGT:
@@ -95,7 +96,7 @@ def main():
 
         mask = Image.open(pathGT)
         ood_gts = np.array(mask)
-
+        print(f"ood_gts appena caricato : {ood_gts}") #debug
         if "RoadAnomaly" in pathGT:
             ood_gts = np.where((ood_gts==2), 1, ood_gts)
         if "LostAndFound" in pathGT:
