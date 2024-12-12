@@ -49,14 +49,16 @@ def main():
     anomaly_score_list = []
     ood_gts_list = []
 
-    if not os.path.exists('results.txt'):
-        open('results.txt', 'w').close()
-    file = open('results.txt', 'a')
+    method = args.method
+
+    if not os.path.exists(f'results-{method}.txt'):
+        open(f'results-{method}.txt', 'w').close()
+    file = open(f'results-{method}.txt', 'a')
 
     modelpath = args.loadDir + args.loadModel
     weightspath = args.loadDir + args.loadWeights
 
-    method = args.method
+    
 
     print ("Loading model: " + modelpath)
     print ("Loading weights: " + weightspath)
