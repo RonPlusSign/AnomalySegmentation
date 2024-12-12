@@ -12,6 +12,8 @@ from argparse import ArgumentParser
 from ood_metrics import fpr_at_95_tpr, calc_metrics, plot_roc, plot_pr,plot_barcode
 from sklearn.metrics import roc_auc_score, roc_curve, auc, precision_recall_curve, average_precision_score
 
+import torch.nn.functional as F # aggiunto io 
+
 seed = 42
 
 # general reproducibility
@@ -84,8 +86,11 @@ def main():
         images = images.permute(0,3,1,2)
         with torch.no_grad():
             result = model(images)
-        print(f"result.squeeze(0).data.cpu().numpy() : {result.squeeze(0).data.cpu().numpy().sum() }") #debug
-        anomaly_result = 1.0 - np.max(result.squeeze(0).data.cpu().numpy(), axis=0)            
+        print(f"result.shpe {result.shape}")#debug
+        probabilities = F.softmax(result, dim=1)
+        print(f"result.squeeze(0).data.cpu().numpy() : { probabilities.squeeze(0).data.cpu().numpy().sum() }") #debug
+        #anomaly_result = 1.0 - np.max(result.squeeze(0).data.cpu().numpy(), axis=0) com'era prima
+        anomaly_result = 1.0 - np.max(probabilities.squeeze(0).data.cpu().numpy(), axis=0)               
         pathGT = path.replace("images", "labels_masks")                
         if "RoadObsticle21" in pathGT:
            pathGT = pathGT.replace("webp", "png")
@@ -98,7 +103,7 @@ def main():
         ood_gts = np.array(mask)
         print(f"ood_gts appena caricato : {ood_gts}") #debug
         if "RoadAnomaly" in pathGT:
-            ood_gts = np.where((ood_gts==2), 1, ood_gts)
+            ood_gts = np.where((ood_gts==2), 1, ood_gts) #ho verificato ci sono veramente dei 2 all'interno dell'immagine
         if "LostAndFound" in pathGT:
             ood_gts = np.where((ood_gts==0), 255, ood_gts)
             ood_gts = np.where((ood_gts==1), 0, ood_gts)
