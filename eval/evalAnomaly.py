@@ -44,6 +44,7 @@ def main():
     parser.add_argument('--num-workers', type=int, default=4)
     parser.add_argument('--batch-size', type=int, default=1)
     parser.add_argument('--cpu', action='store_true')
+    parser.add_argument('--method',default="MSP") #can be MSP or MaxLogit or MaxEntropy
     args = parser.parse_args()
     anomaly_score_list = []
     ood_gts_list = []
@@ -54,6 +55,8 @@ def main():
 
     modelpath = args.loadDir + args.loadModel
     weightspath = args.loadDir + args.loadWeights
+
+    method = args.method
 
     print ("Loading model: " + modelpath)
     print ("Loading weights: " + weightspath)
@@ -89,8 +92,14 @@ def main():
         print(f"result.shpe {result.shape}")#debug
         probabilities = F.softmax(result, dim=1)
         print(f"result.squeeze(0).data.cpu().numpy() : { probabilities.squeeze(0).data.cpu().numpy().sum() }") #debug
-        #anomaly_result = 1.0 - np.max(result.squeeze(0).data.cpu().numpy(), axis=0) com'era prima
-        anomaly_result = 1.0 - np.max(probabilities.squeeze(0).data.cpu().numpy(), axis=0)               
+        
+        if(method == "MaxLogit"):
+            anomaly_result = - np.max(result.squeeze(0).data.cpu().numpy(), axis=0)   
+        elif(method == "MaxEntropy"):
+            anomaly_result = 1.0 - np.max(probabilities.squeeze(0).data.cpu().numpy(), axis=0) 
+        else :#MSP
+            anomaly_result = 1.0 - np.max(probabilities.squeeze(0).data.cpu().numpy(), axis=0)
+            #anomaly_result = 1.0 - np.max(result.squeeze(0).data.cpu().numpy(), axis=0) com'era prima MSP             
         pathGT = path.replace("images", "labels_masks")                
         if "RoadObsticle21" in pathGT:
            pathGT = pathGT.replace("webp", "png")
