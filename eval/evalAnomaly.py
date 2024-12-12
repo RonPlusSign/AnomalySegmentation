@@ -84,7 +84,7 @@ def main():
         images = images.permute(0,3,1,2)
         with torch.no_grad():
             result = model(images)
-        print(f"result.squeeze(0).data.cpu().numpy() : {result.squeeze(0).data.cpu().numpy()}") #debug
+        print(f"result.squeeze(0).data.cpu().numpy() : {result.squeeze(0).data.cpu().numpy().sum() }") #debug
         anomaly_result = 1.0 - np.max(result.squeeze(0).data.cpu().numpy(), axis=0)            
         pathGT = path.replace("images", "labels_masks")                
         if "RoadObsticle21" in pathGT:
