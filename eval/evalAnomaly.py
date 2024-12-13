@@ -119,7 +119,7 @@ def main():
                     entropy = entropy.data.cpu().numpy()[0].astype("float32")
                 return entropy
 
-            anomaly_result = get_entropy(model, images)
+            anomaly_result = get_entropy(model, Image.open(path).convert('RGB'))
         else :#MSP
             anomaly_result = 1.0 - np.max(probabilities.squeeze(0).data.cpu().numpy(), axis=0)
             #anomaly_result = 1.0 - np.max(result.squeeze(0).data.cpu().numpy(), axis=0) com'era prima MSP             
