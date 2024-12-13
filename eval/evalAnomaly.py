@@ -98,7 +98,28 @@ def main():
         if(method == "MaxLogit"):
             anomaly_result = - np.max(result.squeeze(0).data.cpu().numpy(), axis=0)   
         elif(method == "MaxEntropy"):
-            anomaly_result = 1.0 - np.max(probabilities.squeeze(0).data.cpu().numpy(), axis=0) 
+
+            def get_softmax(network, image, transform=None, as_numpy=True):
+                if transform is None:
+                    transform = Compose([ToTensor(), Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
+                x = transform(image)
+                x = x.unsqueeze_(0).cuda()
+                with torch.no_grad():
+                    y = network(x)
+                probs = F.softmax(y, 1)
+                if as_numpy:
+                    probs = probs.data.cpu().numpy()[0].astype("float32")
+                return probs
+
+
+            def get_entropy(network, image, transform=None, as_numpy=True):
+                probs = get_softmax(network, image, transform, as_numpy=False)
+                entropy = torch.div(torch.sum(-probs * torch.log(probs), dim=1), torch.log(torch.tensor(probs.shape[1])))
+                if as_numpy:
+                    entropy = entropy.data.cpu().numpy()[0].astype("float32")
+                return entropy
+
+            anomaly_result = get_entropy(model, image)
         else :#MSP
             anomaly_result = 1.0 - np.max(probabilities.squeeze(0).data.cpu().numpy(), axis=0)
             #anomaly_result = 1.0 - np.max(result.squeeze(0).data.cpu().numpy(), axis=0) com'era prima MSP             
