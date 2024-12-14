@@ -16,7 +16,8 @@ class ModelWithTemperature(nn.Module):
         self.model = model
         #self.temperature = nn.Parameter(torch.ones(1) * 1.5) se fosse nn.Parameter allora sarebbe ottimizzabile dalla rete così evito torch.ones(1) * temperature
         if (temperature != None):
-            self.temperature = nn.Parameter(torch.ones(1) * temperature )
+            #self.temperature = nn.Parameter(torch.ones(1) * temperature )
+            self.register_buffer('temperature', torch.ones(1) * temperature)
         else:
             self.temperature = nn.Parameter(torch.ones(1) * 1.5) 
     
