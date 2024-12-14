@@ -33,7 +33,7 @@ class ModelWithTemperature(nn.Module):
         """
         # Expand temperature to match the size of logits
         print(f"logits: {logits.shape}")
-        temperature = self.temperature.unsqueeze(1).expand(logits.size(0), logits.size(1))
+        temperature = self.temperature.unsqueeze(1).expand(logits.size(0), logits.size(1),logits.size(2), logits.size(3))
         return logits / temperature
 
     # This function probably should live outside of this class, but whatever
