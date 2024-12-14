@@ -14,6 +14,7 @@ from sklearn.metrics import roc_auc_score, roc_curve, auc, precision_recall_curv
 
 import torch.nn.functional as F # aggiunto io 
 from torchvision.transforms import Compose, ToTensor, Normalize, Resize #aggiunto io
+import sys
 seed = 42
 
 # general reproducibility
@@ -83,6 +84,7 @@ def main():
         return model
 
     if (EntireModel != "" ):
+        sys.path.append('/content/AnomalySegmentation')
         model = torch.load(EntireModel)
     else :
         model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
