@@ -45,6 +45,7 @@ def main():
     parser.add_argument('--batch-size', type=int, default=1)
     parser.add_argument('--cpu', action='store_true')
     parser.add_argument('--method',default="MSP") #can be MSP or MaxLogit or MaxEntropy
+    parser.add_argument('--loadEntireModel', default=None) # add the path of the model absolute path
     args = parser.parse_args()
     anomaly_score_list = []
     ood_gts_list = []
@@ -57,7 +58,7 @@ def main():
 
     modelpath = args.loadDir + args.loadModel
     weightspath = args.loadDir + args.loadWeights
-
+    EntireModel = args.EntireModel
     
 
     print ("Loading model: " + modelpath)
@@ -81,7 +82,10 @@ def main():
                 own_state[name].copy_(param)
         return model
 
-    model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
+    if EntireModel != None :
+        model = torch.load(EntireModel)
+    else :
+        model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
     print ("Model and weights LOADED successfully")
     model.eval()
     
