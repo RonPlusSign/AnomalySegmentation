@@ -14,9 +14,9 @@ class ModelWithTemperature(nn.Module):
     def __init__(self, model, temperature = None):
         super(ModelWithTemperature, self).__init__()
         self.model = model
-        #self.temperature = nn.Parameter(torch.ones(1) * 1.5) se fosse nn.Parameter allora sarebbe ottimizzabile dalla rete così evito
+        #self.temperature = nn.Parameter(torch.ones(1) * 1.5) se fosse nn.Parameter allora sarebbe ottimizzabile dalla rete così evito torch.ones(1) * temperature
         if (temperature != None):
-            self.temperature = torch.ones(1) * temperature
+            self.temperature = nn.Parameter(torch.ones(1) * temperature )
         else:
             self.temperature = nn.Parameter(torch.ones(1) * 1.5) 
     
