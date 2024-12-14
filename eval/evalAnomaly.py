@@ -58,7 +58,7 @@ def main():
 
     modelpath = args.loadDir + args.loadModel
     weightspath = args.loadDir + args.loadWeights
-    EntireModel = args.EntireModel
+    EntireModel = args.loadEntireModel
     
 
     print ("Loading model: " + modelpath)
