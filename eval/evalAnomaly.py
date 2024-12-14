@@ -11,8 +11,9 @@ import os.path as osp
 from argparse import ArgumentParser
 from ood_metrics import fpr_at_95_tpr, calc_metrics, plot_roc, plot_pr,plot_barcode
 from sklearn.metrics import roc_auc_score, roc_curve, auc, precision_recall_curve, average_precision_score
-from temperature_scaling import ModelWithTemperature
 
+from torchmetrics.segmentation import MeanIoU
+from temperature_scaling import ModelWithTemperature
 import torch.nn.functional as F # aggiunto io 
 from torchvision.transforms import Compose, ToTensor, Normalize, Resize #aggiunto io
 import sys
@@ -166,7 +167,7 @@ def main():
 
     file.write( "\n")
 
-    ood_gts = np.array(ood_gts_list)
+    ood_gts = np.array(ood_gts_list) 
     anomaly_scores = np.array(anomaly_score_list)
 
     ood_mask = (ood_gts == 1)
@@ -183,6 +184,10 @@ def main():
 
     prc_auc = average_precision_score(val_label, val_out)
     fpr = fpr_at_95_tpr(val_out, val_label)
+
+    
+
+    print(f'val_out : {val_out} \n val_label : {val_label}')
 
     print(f'AUPRC score: {prc_auc*100.0}')
     print(f'FPR@TPR95: {fpr*100.0}')
