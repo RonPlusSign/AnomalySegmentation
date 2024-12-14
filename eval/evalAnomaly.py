@@ -11,6 +11,7 @@ import os.path as osp
 from argparse import ArgumentParser
 from ood_metrics import fpr_at_95_tpr, calc_metrics, plot_roc, plot_pr,plot_barcode
 from sklearn.metrics import roc_auc_score, roc_curve, auc, precision_recall_curve, average_precision_score
+from AnomalySegmentation.temperature_scaling import ModelWithTemperature
 
 import torch.nn.functional as F # aggiunto io 
 from torchvision.transforms import Compose, ToTensor, Normalize, Resize #aggiunto io
@@ -47,6 +48,7 @@ def main():
     parser.add_argument('--cpu', action='store_true')
     parser.add_argument('--method',default="MSP") #can be MSP or MaxLogit or MaxEntropy
     parser.add_argument('--loadEntireModel', default="") # add the path of the model absolute path
+    parser.add_argument('--temperature', default=0) # add the path of the model absolute path
     args = parser.parse_args()
     anomaly_score_list = []
     ood_gts_list = []
@@ -60,6 +62,7 @@ def main():
     modelpath = args.loadDir + args.loadModel
     weightspath = args.loadDir + args.loadWeights
     EntireModel = args.loadEntireModel
+    temperature = args.tempearature
     
 
     print ("Loading model: " + modelpath)
@@ -83,11 +86,11 @@ def main():
                 own_state[name].copy_(param)
         return model
 
-    if (EntireModel != "" ):
-        sys.path.append('/content/AnomalySegmentation')
-        model = torch.load(EntireModel)
-    else :
-        model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
+    
+    model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
+    if(temperature != 0 ):
+        model = ModelWithTemperature(model, temperature = temperature)
+        
     print ("Model and weights LOADED successfully")
     model.eval()
     
