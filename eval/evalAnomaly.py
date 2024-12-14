@@ -11,7 +11,7 @@ import os.path as osp
 from argparse import ArgumentParser
 from ood_metrics import fpr_at_95_tpr, calc_metrics, plot_roc, plot_pr,plot_barcode
 from sklearn.metrics import roc_auc_score, roc_curve, auc, precision_recall_curve, average_precision_score
-from AnomalySegmentation.temperature_scaling import ModelWithTemperature
+from temperature_scaling import ModelWithTemperature
 
 import torch.nn.functional as F # aggiunto io 
 from torchvision.transforms import Compose, ToTensor, Normalize, Resize #aggiunto io
@@ -90,7 +90,7 @@ def main():
     model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
     if(temperature != 0 ):
         model = ModelWithTemperature(model, temperature = temperature)
-        
+
     print ("Model and weights LOADED successfully")
     model.eval()
     
