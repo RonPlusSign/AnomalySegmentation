@@ -62,7 +62,7 @@ def main():
     modelpath = args.loadDir + args.loadModel
     weightspath = args.loadDir + args.loadWeights
     EntireModel = args.loadEntireModel
-    temperature = args.temperature
+    temperature = float(args.temperature)
     
 
     print ("Loading model: " + modelpath)
