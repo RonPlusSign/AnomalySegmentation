@@ -48,7 +48,7 @@ def main():
     parser.add_argument('--batch-size', type=int, default=1)
     parser.add_argument('--cpu', action='store_true')
     parser.add_argument('--method',default="MSP") #can be MSP or MaxLogit or MaxEntropy
-    parser.add_argument('--loadEntireModel', default="") # add the path of the model absolute path
+    
     parser.add_argument('--temperature', default=0) # add the path of the model absolute path
     args = parser.parse_args()
     anomaly_score_list = []
@@ -62,7 +62,7 @@ def main():
 
     modelpath = args.loadDir + args.loadModel
     weightspath = args.loadDir + args.loadWeights
-    EntireModel = args.loadEntireModel
+
     temperature = float(args.temperature)
     
 
