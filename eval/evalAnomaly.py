@@ -12,7 +12,7 @@ from argparse import ArgumentParser
 from ood_metrics import fpr_at_95_tpr, calc_metrics, plot_roc, plot_pr,plot_barcode
 from sklearn.metrics import roc_auc_score, roc_curve, auc, precision_recall_curve, average_precision_score
 
-
+from icecream import ic
 from temperature_scaling import ModelWithTemperature
 import torch.nn.functional as F # aggiunto io 
 from torchvision.transforms import Compose, ToTensor, Normalize, Resize #aggiunto io
@@ -170,24 +170,41 @@ def main():
     ood_gts = np.array(ood_gts_list) 
     anomaly_scores = np.array(anomaly_score_list)
 
-    ood_mask = (ood_gts == 1)
-    ind_mask = (ood_gts == 0)
+    ood_mask = (ood_gts == 1) #array con True dove ood_gts == 1 resto false
+    ind_mask = (ood_gts == 0) #array con True dove ood_gts == 0 resto false
 
-    ood_out = anomaly_scores[ood_mask]
-    ind_out = anomaly_scores[ind_mask]
+    ood_out = anomaly_scores[ood_mask] # prendo soltanto i punteggi degli ood
+    ind_out = anomaly_scores[ind_mask] # prendo soltanto i punteggi degli ind
 
-    ood_label = np.ones(len(ood_out))
-    ind_label = np.zeros(len(ind_out))
+    ood_label = np.ones(len(ood_out)) # creo un array di 1 farà da label
+    ind_label = np.zeros(len(ind_out)) # creo un array di 0 farà da label
     
-    val_out = np.concatenate((ind_out, ood_out))
-    val_label = np.concatenate((ind_label, ood_label))
+    val_out = np.concatenate((ind_out, ood_out)) # array con tutti i punteggi delle classi ind e out
+    val_label = np.concatenate((ind_label, ood_label)) #array con tutte le label delle classi ind e out
 
     prc_auc = average_precision_score(val_label, val_out)
     fpr = fpr_at_95_tpr(val_out, val_label)
 
+    #Mean Intersection Over Union
+    threshold = 0.5
     
+    #ood class
+    val_pred = (val_out >= threshold).astype(int)
 
-    print(f'val_out : {val_out} \n val_label : {val_label}')
+    # Calcolo IoU
+    tp = np.sum((val_pred == 1) & (val_label == 1))
+    fp = np.sum((val_pred == 1) & (val_label == 0))
+    fn = np.sum((val_pred == 0) & (val_label == 1))
+    tn = np.sum((val_pred == 0) & (val_label == 0))
+
+    iou_ood = tp / (tp + fp + fn) if (tp + fp + fn) > 0 else 0
+    iou_ind = tn / (tn + fp + fn) if (tn + fp + fn) > 0 else 0
+
+    # Media degli IoU
+    mIoU = (iou_ood + iou_ind) / 2
+    print(f'mIoU: {mIoU*100.0}') # da ricontrollare 
+
+    #print(f'val_out : {val_out} \n val_label : {val_label}')
 
     print(f'AUPRC score: {prc_auc*100.0}')
     print(f'FPR@TPR95: {fpr*100.0}')
