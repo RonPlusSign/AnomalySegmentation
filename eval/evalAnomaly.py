@@ -114,7 +114,12 @@ def main():
                 if transform is None:
                     transform = Compose([ToTensor(), Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
                 x = transform(image)
-                x = x.unsqueeze_(0).cuda()
+                
+                if (not args.cpu):
+                    x = x.unsqueeze_(0).cuda()
+                else : 
+                    x = x.unsqueeze_(0)
+                    
                 with torch.no_grad():
                     y = network(x)
                 probs = F.softmax(y, 1)
