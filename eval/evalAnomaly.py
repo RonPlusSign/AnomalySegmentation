@@ -138,6 +138,7 @@ def main():
             anomaly_result = get_entropy(model, Image.open(path).convert('RGB'))
         else :#MSP
             anomaly_result = 1.0 - np.max(probabilities.squeeze(0).data.cpu().numpy(), axis=0)
+            ic(anomaly_result)
             #anomaly_result = 1.0 - np.max(result.squeeze(0).data.cpu().numpy(), axis=0) com'era prima MSP             
         pathGT = path.replace("images", "labels_masks")                
         if "RoadObsticle21" in pathGT:
