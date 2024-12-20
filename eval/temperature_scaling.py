@@ -18,6 +18,7 @@ class ModelWithTemperature(nn.Module):
         if (temperature != None):
             #self.temperature = nn.Parameter(torch.ones(1) * temperature )
             self.temperature = nn.Parameter(torch.ones(1) * float(temperature)  )
+          
             #self.register_buffer('temperature', torch.ones(1) * temperature)
         else:
             self.temperature = nn.Parameter(torch.ones(1) * 1.5) 
@@ -33,7 +34,7 @@ class ModelWithTemperature(nn.Module):
         """
         # Expand temperature to match the size of logits
         print(f"logits: {logits.shape}")
-        temperature = self.temperature.unsqueeze(1).expand(logits.size(0), logits.size(1),logits.size(2), logits.size(3))
+        temperature = self.temperature.unsqueeze(1).expand(logits.size(0), logits.size(1),logits.size(2), logits.size(3)).to(logits.device)  
         return logits / temperature
 
     # This function probably should live outside of this class, but whatever
