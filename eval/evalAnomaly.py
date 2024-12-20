@@ -139,6 +139,7 @@ def main():
         else :#MSP
             anomaly_result = 1.0 - np.max(probabilities.squeeze(0).data.cpu().numpy(), axis=0)
             ic(anomaly_result)
+            ic( np.max(probabilities.squeeze(0).data.cpu().numpy(), axis=0) )
             #anomaly_result = 1.0 - np.max(result.squeeze(0).data.cpu().numpy(), axis=0) com'era prima MSP             
         pathGT = path.replace("images", "labels_masks")                
         if "RoadObsticle21" in pathGT:
