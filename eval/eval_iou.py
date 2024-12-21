@@ -113,7 +113,7 @@ def main(args):
 
         #QUI finisce
         #iouEvalVal.addBatch(outputs.max(1)[1].unsqueeze(1).data, labels)
-        iouEvalVal.addBatch(anomaly_result.max(1)[1].unsqueeze(1).data, labels)
+        iouEvalVal.addBatch(anomaly_result.max.unsqueeze(1).data, labels)
 
         filenameSave = filename[0].split("leftImg8bit/")[1] 
 
