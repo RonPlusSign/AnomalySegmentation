@@ -108,6 +108,7 @@ def main(args):
         else :#MSP
             probabilities = F.softmax(result, dim=1)
             anomaly_result = 1.0 - np.max(probabilities.squeeze(0).data.cpu().numpy(), axis=0)
+            anomaly_result = anomaly_result.argmax(dim=1)
             #anomaly_result = 1.0 - torch.max(F.softmax(result / args.temperature, dim=0), dim=0)[0]
 
         #QUI finisce
