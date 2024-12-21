@@ -126,6 +126,7 @@ def main(args):
         iouStr = getColorEntry(iou_classes[i])+'{:0.2f}'.format(iou_classes[i]*100) + '\033[0m'
         iou_classes_str.append(iouStr)
 
+    print(f"-------------{method}-------------------")
     print("---------------------------------------")
     print("Took ", time.time()-start, "seconds")
     print("=======================================")
