@@ -41,6 +41,8 @@ def main(args):
 
     modelpath = args.loadDir + args.loadModel
     weightspath = args.loadDir + args.loadWeights
+    
+    method = args.method
 
     print ("Loading model: " + modelpath)
     print ("Loading weights: " + weightspath)
@@ -90,7 +92,27 @@ def main(args):
         with torch.no_grad():
             outputs = model(inputs)
 
-        iouEvalVal.addBatch(outputs.max(1)[1].unsqueeze(1).data, labels)
+        #QUI inizia la mia modifica
+        result = outputs
+        print(f"result.squeeze(0).data.cpu().numpy() : { probabilities.squeeze(0).data.cpu().numpy().sum() }") #debug
+        
+        if(method == "MaxLogit"):
+            anomaly_result = - np.max(result.squeeze(0).data.cpu().numpy(), axis=0)   
+        elif(method == "MaxEntropy"):
+
+            anomaly_result = torch.div(
+                    torch.sum(-F.softmax(result, dim=0) * F.log_softmax(result, dim=0), dim=0),
+                    torch.log(torch.tensor(result.size(0))),
+                )
+
+        else :#MSP
+            probabilities = F.softmax(result, dim=1)
+            anomaly_result = 1.0 - np.max(probabilities.squeeze(0).data.cpu().numpy(), axis=0)
+            #anomaly_result = 1.0 - torch.max(F.softmax(result / args.temperature, dim=0), dim=0)[0]
+
+        #QUI finisce
+        #iouEvalVal.addBatch(outputs.max(1)[1].unsqueeze(1).data, labels)
+        iouEvalVal.addBatch(anomaly_result.max(1)[1].unsqueeze(1).data, labels)
 
         filenameSave = filename[0].split("leftImg8bit/")[1] 
 
@@ -145,5 +167,6 @@ if __name__ == '__main__':
     parser.add_argument('--num-workers', type=int, default=4)
     parser.add_argument('--batch-size', type=int, default=1)
     parser.add_argument('--cpu', action='store_true')
+    parser.add_argument('--method',default="MSP") #can be MSP or MaxLogit or MaxEntropy
 
     main(parser.parse_args())
