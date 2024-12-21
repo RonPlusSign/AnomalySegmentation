@@ -94,7 +94,7 @@ def main(args):
 
         #QUI inizia la mia modifica
         result = outputs
-        print(f"result.squeeze(0).data.cpu().numpy() : { probabilities.squeeze(0).data.cpu().numpy().sum() }") #debug
+
         
         if(method == "MaxLogit"):
             anomaly_result = - np.max(result.squeeze(0).data.cpu().numpy(), axis=0)   
