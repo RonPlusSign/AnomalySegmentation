@@ -23,6 +23,8 @@ from erfnet import ERFNet
 from transform import Relabel, ToLabel, Colorize
 from iouEval import iouEval, getColorEntry
 
+from icecream import ic
+
 NUM_CHANNELS = 3
 NUM_CLASSES = 20
 
@@ -111,11 +113,13 @@ def main(args):
 
         #QUI finisce
         #iouEvalVal.addBatch(outputs.max(1)[1].unsqueeze(1).data, labels)
+        ic(result)
+        ic(anomaly_result)
         print("result result dtype:", result.dtype)
         print("result result shape:", result.shape)
         print("Anomaly result dtype:", anomaly_result.dtype)
         print("Anomaly result shape:", anomaly_result.shape)
-        iouEvalVal.addBatch(anomaly_result.long().unsqueeze(1).data, labels)
+        iouEvalVal.addBatch(anomaly_result.round().long().unsqueeze(1).data, labels)
 
         filenameSave = filename[0].split("leftImg8bit/")[1] 
 
