@@ -109,7 +109,7 @@ def main(args):
 
         else :#MSP
             anomaly_result = 1.0 - torch.max(F.softmax(result , dim=0), dim=0)[0]
-            #anomaly_result = 1.0 - torch.max(F.softmax(result / args.temperature, dim=0), dim=0)[0]
+         
 
         #QUI finisce
         #iouEvalVal.addBatch(outputs.max(1)[1].unsqueeze(1).data, labels)
