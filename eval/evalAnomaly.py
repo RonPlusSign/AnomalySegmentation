@@ -109,7 +109,7 @@ def main():
         if(method == "MaxLogit"):
             anomaly_result = - np.max(result.squeeze(0).data.cpu().numpy(), axis=0)   
         elif(method == "MaxEntropy"):
-
+            # da sistemare non il massimo
             def get_softmax(network, image, transform=None, as_numpy=True):
                 if transform is None:
                     transform = Compose([ToTensor(), Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
