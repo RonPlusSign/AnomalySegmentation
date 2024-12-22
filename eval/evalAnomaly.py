@@ -113,7 +113,7 @@ def main():
             def get_softmax(network, image, transform=None, as_numpy=True):
                 if transform is None:
                     transform = Compose([ToTensor(), Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
-                x = transform(image)
+                #x = transform(image)
                 
                 if (not args.cpu):
                     x = x.unsqueeze_(0).cuda()
@@ -140,8 +140,7 @@ def main():
             anomaly_result = 1.0 - np.max(probabilities.squeeze(0).data.cpu().numpy(), axis=0)
             #anomaly_result = 1.0 - torch.max(F.softmax(result / args.temperature, dim=0), dim=0)[0]
            
-            ic(anomaly_result)
-            ic( anomaly_result1 )
+            
             #anomaly_result = 1.0 - np.max(result.squeeze(0).data.cpu().numpy(), axis=0) com'era prima MSP             
         pathGT = path.replace("images", "labels_masks")                
         if "RoadObsticle21" in pathGT:
