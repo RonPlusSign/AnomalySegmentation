@@ -104,7 +104,7 @@ def main():
             result = model(images)
         print(f"result.shape {result.shape}") #debug ogni risultato è un Tensore del tipo [1, 20, 720, 1280] [batch_size, channels, height, width]
         
-       
+        
         
         if(method == "MaxLogit"):
             anomaly_result = - np.max(result.squeeze(0).data.cpu().numpy(), axis=0)   
@@ -145,6 +145,8 @@ def main():
             anomaly_result = anomaly_result.data.cpu().numpy()
             ic(result)
             ic(anomaly_result)
+            ic(result.shape)
+            ic(anomaly_result.shape)
             
                          
         pathGT = path.replace("images", "labels_masks")                
