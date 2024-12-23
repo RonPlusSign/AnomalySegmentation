@@ -99,7 +99,10 @@ def main():
     for path in glob.glob(os.path.expanduser(str(args.input[0]))):
         print(path)
         images = torch.from_numpy(np.array(Image.open(path).convert('RGB'))).unsqueeze(0).float()
+        #images = input_transform((Image.open(path).convert('RGB'))).unsqueeze(0).float()
+        ic(images.shape)
         images = images.permute(0,3,1,2)
+        ic(images.shape)
         with torch.no_grad():
             result = model(images)
         print(f"result.shape {result.shape}") #debug ogni risultato è un Tensore del tipo [1, 20, 720, 1280] [batch_size, channels, height, width]
@@ -138,11 +141,12 @@ def main():
             anomaly_result = get_entropy(model, Image.open(path).convert('RGB'))
         else :#MSP
             
+            #probabilities = F.softmax(result, dim=1)
             #anomaly_result = 1.0 - np.max(probabilities.squeeze(0).data.cpu().numpy(), axis=0)
             #anomaly_result = 1.0 - torch.max(F.softmax(result / args.temperature, dim=0), dim=0)[0]
             #anomaly_result = 1.0 - np.max(result.squeeze(0).data.cpu().numpy(), axis=0) com'era prima MSP
+            
             result = result.squeeze(0)
-            probabilities = F.softmax(result, dim=1)
             anomaly_result = 1.0 - torch.max(F.softmax(result, dim=0), dim=0)[0]
             anomaly_result = anomaly_result.data.cpu().numpy()
             ic(result)
