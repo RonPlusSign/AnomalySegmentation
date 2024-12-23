@@ -191,7 +191,7 @@ def main():
         print(f"ood_gts appena caricato : {ood_gts}") #debug
         if "RoadAnomaly" in pathGT:
             ood_gts = np.where((ood_gts==2), 1, ood_gts) #ho verificato ci sono veramente dei 2 all'interno dell'immagine
-        if "LostAndFound" in pathGT:
+        if "LostFound" in pathGT: #LostAndFound
             ood_gts = np.where((ood_gts==0), 255, ood_gts)
             ood_gts = np.where((ood_gts==1), 0, ood_gts)
             ood_gts = np.where((ood_gts>1)&(ood_gts<201), 1, ood_gts)
