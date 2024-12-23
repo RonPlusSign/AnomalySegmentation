@@ -27,6 +27,12 @@ input_transform = Compose(
     ]
 )
 
+target_transform = Compose(
+    [
+        Resize((512, 1024), Image.NEAREST),
+    ]
+)
+
 # general reproducibility
 random.seed(seed)
 np.random.seed(seed)
@@ -172,6 +178,7 @@ def main():
            pathGT = pathGT.replace("jpg", "png")  
 
         mask = Image.open(pathGT)
+        mask = target_transform(mask)
         ood_gts = np.array(mask)
         print(f"ood_gts appena caricato : {ood_gts}") #debug
         if "RoadAnomaly" in pathGT:
