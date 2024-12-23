@@ -119,6 +119,7 @@ def main():
         #ic(images.shape) # [1, 3, 720, 1280]
         with torch.no_grad():
             result = model(images)
+            result = result[:-1]
         print(f"result.shape {result.shape}") #debug ogni risultato è un Tensore del tipo [1, 20, 720, 1280] [batch_size, channels, height, width]
         
         
