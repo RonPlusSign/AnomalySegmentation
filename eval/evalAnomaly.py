@@ -124,7 +124,9 @@ def main():
         
         
         if(method == "MaxLogit"):
-            anomaly_result = - np.max(result.squeeze(0).data.cpu().numpy(), axis=0)   
+            #anomaly_result = - np.max(result.squeeze(0).data.cpu().numpy(), axis=0)[0]   
+            anomaly_result = -torch.max(result.squeeze(0), dim=0)[0]
+            anomaly_result = anomaly_result.data.cpu().numpy()
         elif(method == "MaxEntropy"):
             # da sistemare non il massimo
             '''def get_softmax(network, image, transform=None, as_numpy=True):
@@ -151,13 +153,13 @@ def main():
                 probs = F.softmax(result, dim=0)
                 entropy = torch.div(torch.sum(-probs * torch.log(probs), dim=1), torch.log(torch.tensor(probs.shape[1])))
                 if as_numpy:
-                    entropy = entropy.data.cpu().numpy()[0].astype("float32")
+                    entropy = entropy.data.cpu().numpy().astype("float32")
                 return entropy
 
             #anomaly_result = get_entropy(model, Image.open(path).convert('RGB'))
             result = result.squeeze(0)
             probs = F.softmax(result, dim=0)
-            entropy = torch.div(torch.sum(-probs * torch.log(probs), dim=1), torch.log(torch.tensor(probs.shape[1])))
+            entropy = torch.div(torch.sum(-probs * torch.log(probs), dim=0), torch.log(torch.tensor(probs.shape[0])))
             anomaly_result = entropy.data.cpu().numpy()[0].astype("float32")
         else :#MSP
             
