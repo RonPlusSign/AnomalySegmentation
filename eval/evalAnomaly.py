@@ -127,7 +127,7 @@ def main():
             anomaly_result = - np.max(result.squeeze(0).data.cpu().numpy(), axis=0)   
         elif(method == "MaxEntropy"):
             # da sistemare non il massimo
-            def get_softmax(network, image, transform=None, as_numpy=True):
+            '''def get_softmax(network, image, transform=None, as_numpy=True):
                 if transform is None:
                     transform = Compose([ToTensor(), Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
                 #x = transform(image)
@@ -142,11 +142,13 @@ def main():
                 probs = F.softmax(y, 1)
                 if as_numpy:
                     probs = probs.data.cpu().numpy()[0].astype("float32")
-                return probs
+                return probs'''
 
 
             def get_entropy(network, image, transform=None, as_numpy=True):
-                probs = get_softmax(network, image, transform, as_numpy=False)
+                #probs = get_softmax(network, image, transform, as_numpy=False)
+                result = result.squeeze(0)
+                probs = F.softmax(result, dim=0)
                 entropy = torch.div(torch.sum(-probs * torch.log(probs), dim=1), torch.log(torch.tensor(probs.shape[1])))
                 if as_numpy:
                     entropy = entropy.data.cpu().numpy()[0].astype("float32")
