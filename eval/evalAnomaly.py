@@ -19,6 +19,14 @@ from torchvision.transforms import Compose, ToTensor, Normalize, Resize #aggiunt
 import sys
 seed = 42
 
+input_transform = Compose(
+    [
+        Resize((512, 1024), Image.BILINEAR),
+        ToTensor(),
+        # Normalize([.485, .456, .406], [.229, .224, .225]),
+    ]
+)
+
 # general reproducibility
 random.seed(seed)
 np.random.seed(seed)
@@ -98,11 +106,11 @@ def main():
     
     for path in glob.glob(os.path.expanduser(str(args.input[0]))):
         print(path)
-        images = torch.from_numpy(np.array(Image.open(path).convert('RGB'))).unsqueeze(0).float()
-        #images = input_transform((Image.open(path).convert('RGB'))).unsqueeze(0).float()
-        ic(images.shape)
+        #images = torch.from_numpy(np.array(Image.open(path).convert('RGB'))).unsqueeze(0).float()
+        images = input_transform((Image.open(path).convert('RGB'))).unsqueeze(0).float()
+        ic(images.shape) # [1, 720, 1280, 3]
         images = images.permute(0,3,1,2)
-        ic(images.shape)
+        ic(images.shape) # [1, 3, 720, 1280]
         with torch.no_grad():
             result = model(images)
         print(f"result.shape {result.shape}") #debug ogni risultato è un Tensore del tipo [1, 20, 720, 1280] [batch_size, channels, height, width]
