@@ -109,7 +109,7 @@ def main():
         #images = torch.from_numpy(np.array(Image.open(path).convert('RGB'))).unsqueeze(0).float()
         images = input_transform((Image.open(path).convert('RGB'))).unsqueeze(0).float()
         ic(images.shape) # [1, 720, 1280, 3]
-        images = images.permute(0,3,1,2)
+        #images = images.permute(0,3,1,2)
         ic(images.shape) # [1, 3, 720, 1280]
         with torch.no_grad():
             result = model(images)
