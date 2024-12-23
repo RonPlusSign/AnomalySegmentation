@@ -160,7 +160,7 @@ def main():
             result = result.squeeze(0)
             probs = F.softmax(result, dim=0)
             entropy = torch.div(torch.sum(-probs * torch.log(probs), dim=0), torch.log(torch.tensor(probs.shape[0])))
-            anomaly_result = entropy.data.cpu().numpy()[0].astype("float32")
+            anomaly_result = entropy.data.cpu().numpy().astype("float32")
         else :#MSP
             
             #probabilities = F.softmax(result, dim=1)
@@ -191,7 +191,7 @@ def main():
         print(f"ood_gts appena caricato : {ood_gts}") #debug
         if "RoadAnomaly" in pathGT:
             ood_gts = np.where((ood_gts==2), 1, ood_gts) #ho verificato ci sono veramente dei 2 all'interno dell'immagine
-        if "LostFound" in pathGT: #LostAndFound
+        if "LostAndFound" in pathGT: #LostAndFound
             ood_gts = np.where((ood_gts==0), 255, ood_gts)
             ood_gts = np.where((ood_gts==1), 0, ood_gts)
             ood_gts = np.where((ood_gts>1)&(ood_gts<201), 1, ood_gts)
