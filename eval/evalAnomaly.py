@@ -114,9 +114,9 @@ def main():
         print(path)
         #images = torch.from_numpy(np.array(Image.open(path).convert('RGB'))).unsqueeze(0).float()
         images = input_transform((Image.open(path).convert('RGB'))).unsqueeze(0).float()
-        ic(images.shape) # [1, 720, 1280, 3]
+        #ic(images.shape) # [1, 720, 1280, 3]
         #images = images.permute(0,3,1,2)
-        ic(images.shape) # [1, 3, 720, 1280]
+        #ic(images.shape) # [1, 3, 720, 1280]
         with torch.no_grad():
             result = model(images)
         print(f"result.shape {result.shape}") #debug ogni risultato è un Tensore del tipo [1, 20, 720, 1280] [batch_size, channels, height, width]
@@ -144,7 +144,7 @@ def main():
                 probs = F.softmax(y, 1)
                 if as_numpy:
                     probs = probs.data.cpu().numpy()[0].astype("float32")
-                return probs'''
+                return probs
 
 
             def get_entropy(network, image, transform=None, as_numpy=True):
@@ -154,7 +154,7 @@ def main():
                 entropy = torch.div(torch.sum(-probs * torch.log(probs), dim=1), torch.log(torch.tensor(probs.shape[1])))
                 if as_numpy:
                     entropy = entropy.data.cpu().numpy().astype("float32")
-                return entropy
+                return entropy'''
 
             #anomaly_result = get_entropy(model, Image.open(path).convert('RGB'))
             result = result.squeeze(0)
