@@ -154,7 +154,11 @@ def main():
                     entropy = entropy.data.cpu().numpy()[0].astype("float32")
                 return entropy
 
-            anomaly_result = get_entropy(model, Image.open(path).convert('RGB'))
+            #anomaly_result = get_entropy(model, Image.open(path).convert('RGB'))
+            result = result.squeeze(0)
+            probs = F.softmax(result, dim=0)
+            entropy = torch.div(torch.sum(-probs * torch.log(probs), dim=1), torch.log(torch.tensor(probs.shape[1])))
+            anomaly_result = entropy.data.cpu().numpy()[0].astype("float32")
         else :#MSP
             
             #probabilities = F.softmax(result, dim=1)
@@ -165,10 +169,10 @@ def main():
             result = result.squeeze(0)
             anomaly_result = 1.0 - torch.max(F.softmax(result, dim=0), dim=0)[0]
             anomaly_result = anomaly_result.data.cpu().numpy()
-            ic(result)
+            '''ic(result)
             ic(anomaly_result)
             ic(result.shape)
-            ic(anomaly_result.shape)
+            ic(anomaly_result.shape)'''
             
                          
         pathGT = path.replace("images", "labels_masks")                
