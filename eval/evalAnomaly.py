@@ -191,12 +191,12 @@ def main():
         print(f"ood_gts appena caricato : {ood_gts}") #debug
         if "RoadAnomaly" in pathGT:
             ood_gts = np.where((ood_gts==2), 1, ood_gts) #ho verificato ci sono veramente dei 2 all'interno dell'immagine
-        if "LostAndFound" in pathGT: #LostAndFound
+        if "LostAndFound" in pathGT: #LostAndFound qui non entra
             ood_gts = np.where((ood_gts==0), 255, ood_gts)
             ood_gts = np.where((ood_gts==1), 0, ood_gts)
             ood_gts = np.where((ood_gts>1)&(ood_gts<201), 1, ood_gts)
 
-        if "Streethazard" in pathGT:
+        if "Streethazard" in pathGT: #  qui non entra
             ood_gts = np.where((ood_gts==14), 255, ood_gts)
             ood_gts = np.where((ood_gts<20), 0, ood_gts)
             ood_gts = np.where((ood_gts==255), 1, ood_gts)
@@ -229,24 +229,7 @@ def main():
     prc_auc = average_precision_score(val_label, val_out)
     fpr = fpr_at_95_tpr(val_out, val_label)
 
-    #Mean Intersection Over Union
-    threshold = 0.5
     
-    #ood class
-    val_pred = (val_out >= threshold).astype(int)
-
-    # Calcolo IoU
-    tp = np.sum((val_pred == 1) & (val_label == 1))
-    fp = np.sum((val_pred == 1) & (val_label == 0))
-    fn = np.sum((val_pred == 0) & (val_label == 1))
-    tn = np.sum((val_pred == 0) & (val_label == 0))
-
-    iou_ood = tp / (tp + fp + fn) if (tp + fp + fn) > 0 else 0
-    iou_ind = tn / (tn + fp + fn) if (tn + fp + fn) > 0 else 0
-
-    # Media degli IoU
-    mIoU = (iou_ood + iou_ind) / 2
-    print(f'mIoU: {mIoU*100.0}') # da ricontrollare 
 
     #print(f'val_out : {val_out} \n val_label : {val_label}')
 
