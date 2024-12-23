@@ -118,7 +118,7 @@ def main():
         #images = images.permute(0,3,1,2)
         #ic(images.shape) # [1, 3, 720, 1280]
         with torch.no_grad():
-            result = model(images)
+            result = model(images).squeeze(0)
             result = result[:-1]
         print(f"result.shape {result.shape}") #debug ogni risultato è un Tensore del tipo [1, 20, 720, 1280] [batch_size, channels, height, width]
         
@@ -126,7 +126,7 @@ def main():
         
         if(method == "MaxLogit"):
             #anomaly_result = - np.max(result.squeeze(0).data.cpu().numpy(), axis=0)[0]   
-            anomaly_result = -torch.max(result.squeeze(0), dim=0)[0]
+            anomaly_result = -torch.max(result, dim=0)[0]
             anomaly_result = anomaly_result.data.cpu().numpy()
         elif(method == "MaxEntropy"):
             # da sistemare non il massimo
@@ -158,7 +158,7 @@ def main():
                 return entropy'''
 
             #anomaly_result = get_entropy(model, Image.open(path).convert('RGB'))
-            result = result.squeeze(0)
+            #result = result.squeeze(0)
             probs = F.softmax(result, dim=0)
             entropy = torch.div(torch.sum(-probs * torch.log(probs), dim=0), torch.log(torch.tensor(probs.shape[0])))
             anomaly_result = entropy.data.cpu().numpy().astype("float32")
@@ -169,7 +169,7 @@ def main():
             #anomaly_result = 1.0 - torch.max(F.softmax(result / args.temperature, dim=0), dim=0)[0]
             #anomaly_result = 1.0 - np.max(result.squeeze(0).data.cpu().numpy(), axis=0) com'era prima MSP
             
-            result = result.squeeze(0)
+            #result = result.squeeze(0)
             anomaly_result = 1.0 - torch.max(F.softmax(result, dim=0), dim=0)[0]
             anomaly_result = anomaly_result.data.cpu().numpy()
             '''ic(result)
