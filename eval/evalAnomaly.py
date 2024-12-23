@@ -137,11 +137,12 @@ def main():
 
             anomaly_result = get_entropy(model, Image.open(path).convert('RGB'))
         else :#MSP
-            probabilities = F.softmax(result, dim=1)
+            
             #anomaly_result = 1.0 - np.max(probabilities.squeeze(0).data.cpu().numpy(), axis=0)
             #anomaly_result = 1.0 - torch.max(F.softmax(result / args.temperature, dim=0), dim=0)[0]
             #anomaly_result = 1.0 - np.max(result.squeeze(0).data.cpu().numpy(), axis=0) com'era prima MSP
             result = result.squeeze(0)
+            probabilities = F.softmax(result, dim=1)
             anomaly_result = 1.0 - torch.max(F.softmax(result, dim=0), dim=0)[0]
             anomaly_result = anomaly_result.data.cpu().numpy()
             ic(result)
