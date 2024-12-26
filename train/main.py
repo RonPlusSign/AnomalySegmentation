@@ -435,7 +435,7 @@ def main(args):
     if args.model == "erfnet":
         model = model_file.ERFNet(NUM_CLASSES)
     elif args.model == "bisenet":
-        model = model_file.BiSeNet(NUM_CLASSES)
+        model = model_file.BiSeNetV1(NUM_CLASSES)
     elif args.model == "enet":
         model = model_file.ENet(NUM_CLASSES)
 
