@@ -97,29 +97,6 @@ def calculate_class_weights(dataset, num_classes):
     class_weights_tensor = torch.tensor(class_weights, dtype=torch.float32)
     return class_weights_tensor
 
-"""
-# Funzione per calcolare l'istogramma delle etichette e i pesi delle classi
-def calculate_class_weights(dataset, num_classes):
-    class_counts = np.zeros(num_classes)
-    
-    # Itera attraverso il dataset e calcola l'istogramma delle etichette
-    for _, label in dataset:
-        class_counts += np.bincount(label.flatten(), minlength=num_classes)
-    
-    # Calcola il totale dei pixel
-    total_pixels = np.sum(class_counts)
-    
-    # Calcola i pesi come l'inverso della frequenza
-    class_weights = total_pixels / (num_classes * class_counts)
-    
-    # Per evitare divisioni per zero, sostituisci le classi con frequenza zero con un peso molto alto
-    class_weights[class_counts == 0] = 1.0
-    
-    # Normalizzare i pesi (opzionale)
-    class_weights = class_weights / np.max(class_weights)
-    
-    return torch.tensor(class_weights, dtype=torch.float32)
-"""
 
 def train(args, model, enc=False):
     best_acc = 0
@@ -280,7 +257,7 @@ def train(args, model, enc=False):
             loss.backward()
             optimizer.step()
 
-            epoch_loss.append(loss.data[0])
+            epoch_loss.append(loss.item())
             time_train.append(time.time() - start_time)
 
             if (doIouTrain):
@@ -340,7 +317,7 @@ def train(args, model, enc=False):
             outputs = model(inputs, only_encode=enc) 
 
             loss = criterion(outputs, targets[:, 0])
-            epoch_loss_val.append(loss.data[0])
+            epoch_loss_val.append(loss.item())
             time_val.append(time.time() - start_time)
 
 
@@ -446,7 +423,14 @@ def main(args):
     #Load Model
     assert os.path.exists(args.model + ".py"), "Error: model definition not found"
     model_file = importlib.import_module(args.model)
-    model = model_file.Net(NUM_CLASSES)
+
+    if args.model == "erfnet":
+        model = model_file.ERFNet(NUM_CLASSES)
+    elif args.model == "bisenet":
+        model = model_file.BiSeNet(NUM_CLASSES)
+    elif args.model == "enet":
+        model = model_file.ENet(NUM_CLASSES)
+
     copyfile(args.model + ".py", savedir + '/' + args.model + ".py")
     
     if args.cuda:
