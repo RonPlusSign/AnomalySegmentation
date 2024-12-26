@@ -29,7 +29,7 @@ from iouEval import iouEval, getColorEntry
 from shutil import copyfile
 
 NUM_CHANNELS = 3
-NUM_CLASSES = 20 #pascal=22, cityscapes=20
+NUM_CLASSES = 20  # 19 classes + void
 
 color_transform = Colorize(NUM_CLASSES)
 image_transform = ToPILImage()
@@ -80,11 +80,50 @@ class CrossEntropyLoss2d(torch.nn.Module):
 
     def forward(self, outputs, targets):
         return self.loss(torch.nn.functional.log_softmax(outputs, dim=1), targets)
+    
+def calculate_class_weights(dataset, num_classes):
+    # Initialize a histogram for the class labels
+    class_counts = np.zeros(num_classes)
+    
+    # Iterate through the dataset and count occurrences of each label
+    for _, label in dataset:
+        class_counts[label] += 1
 
+    # Calculate the weights as the inverse of the class frequency
+    total_samples = len(dataset)
+    class_weights = total_samples / (num_classes * class_counts)
+    
+    # Convert to a torch tensor
+    class_weights_tensor = torch.tensor(class_weights, dtype=torch.float32)
+    return class_weights_tensor
+
+"""
+# Funzione per calcolare l'istogramma delle etichette e i pesi delle classi
+def calculate_class_weights(dataset, num_classes):
+    class_counts = np.zeros(num_classes)
+    
+    # Itera attraverso il dataset e calcola l'istogramma delle etichette
+    for _, label in dataset:
+        class_counts += np.bincount(label.flatten(), minlength=num_classes)
+    
+    # Calcola il totale dei pixel
+    total_pixels = np.sum(class_counts)
+    
+    # Calcola i pesi come l'inverso della frequenza
+    class_weights = total_pixels / (num_classes * class_counts)
+    
+    # Per evitare divisioni per zero, sostituisci le classi con frequenza zero con un peso molto alto
+    class_weights[class_counts == 0] = 1.0
+    
+    # Normalizzare i pesi (opzionale)
+    class_weights = class_weights / np.max(class_weights)
+    
+    return torch.tensor(class_weights, dtype=torch.float32)
+"""
 
 def train(args, model, enc=False):
     best_acc = 0
-
+    
     #TODO: calculate weights by processing dataset histogram (now its being set by hand from the torch values)
     #create a loder to run all images and calculate histogram of labels, then create weight array using class balancing
 
@@ -134,10 +173,17 @@ def train(args, model, enc=False):
 
     assert os.path.exists(args.datadir), "Error: datadir (dataset directory) could not be loaded"
 
+    # Augmentations and Normalizations
     co_transform = MyCoTransform(enc, augment=True, height=args.height)#1024)
     co_transform_val = MyCoTransform(enc, augment=False, height=args.height)#1024)
+
+    # Dataset and Loader
     dataset_train = cityscapes(args.datadir, co_transform, 'train')
     dataset_val = cityscapes(args.datadir, co_transform_val, 'val')
+
+    # Calcoliamo i pesi delle classi dal dataset di addestramento
+    #weights = calculate_class_weights(dataset_train, NUM_CLASSES)
+    #print("Pesi delle classi:", weights)
 
     loader = DataLoader(dataset_train, num_workers=args.num_workers, batch_size=args.batch_size, shuffle=True)
     loader_val = DataLoader(dataset_val, num_workers=args.num_workers, batch_size=args.batch_size, shuffle=False)
