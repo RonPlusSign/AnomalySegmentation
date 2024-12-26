@@ -318,7 +318,11 @@ def train(args, model, enc=False):
 
             inputs = Variable(images, volatile=True)    #volatile flag makes it free backward or outputs for eval
             targets = Variable(labels, volatile=True)
-            outputs = model(inputs, only_encode=enc) 
+
+            if args.model == "erfnet":
+                outputs = model(inputs, only_encode=enc) 
+            else:
+                outputs = model(inputs)
 
             loss = criterion(outputs, targets[:, 0])
             epoch_loss_val.append(loss.item())
