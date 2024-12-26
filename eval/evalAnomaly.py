@@ -15,7 +15,7 @@ from sklearn.metrics import roc_auc_score, roc_curve, auc, precision_recall_curv
 from icecream import ic
 from temperature_scaling import ModelWithTemperature
 import torch.nn.functional as F # aggiunto io 
-from torchvision.transforms import Compose, ToTensor, Normalize, Resize #aggiunto io
+from torchvision.transforms import Compose, ToTensor, Normalize, Resize
 import sys
 seed = 42
 
@@ -23,7 +23,7 @@ input_transform = Compose(
     [
         Resize((512, 1024), Image.BILINEAR),
         ToTensor(),
-         Normalize([.485, .456, .406], [.229, .224, .225]),
+        #  Normalize([.485, .456, .406], [.229, .224, .225]),
     ]
 )
 
@@ -40,6 +40,7 @@ torch.manual_seed(seed)
 
 NUM_CHANNELS = 3
 NUM_CLASSES = 20
+
 # gpu training specific
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = True
@@ -48,12 +49,10 @@ def main():
     parser = ArgumentParser()
     parser.add_argument(
         "--input",
-        default="/home/shyam/Mask2Former/unk-eval/RoadObsticle21/images/*.webp",
-        nargs="+",
-        help="A list of space separated input images; "
-        "or a single glob pattern such as 'directory/*.jpg'",
+        default="/content/Validation_Dataset/RoadObsticle21/images/*.webp",
+        help="A single glob pattern such as 'directory/*.jpg'",
     )  
-    parser.add_argument('--loadDir',default="../trained_models/")
+    parser.add_argument('--loadDir',default="/content/AnomalySegmentation/trained_models/")
     parser.add_argument('--loadWeights', default="erfnet_pretrained.pth")
     parser.add_argument('--loadModel', default="erfnet.py")
     parser.add_argument('--subset', default="val")  #can be val or train (must have labels)
@@ -78,11 +77,9 @@ def main():
     weightspath = args.loadDir + args.loadWeights
 
     temperature = float(args.temperature)
-    
 
     print ("Loading model: " + modelpath)
     print ("Loading weights: " + weightspath)
-
     model = ERFNet(NUM_CLASSES)
 
     if (not args.cpu):
@@ -100,8 +97,6 @@ def main():
             else:
                 own_state[name].copy_(param)
         return model
-
-    
     model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
 
     if(temperature != 0 ):
@@ -110,7 +105,7 @@ def main():
     print ("Model and weights LOADED successfully")
     model.eval()
     
-    for path in glob.glob(os.path.expanduser(str(args.input[0]))):
+    for path in glob.glob(os.path.expanduser(str(args.input))):
         print(path)
         #images = torch.from_numpy(np.array(Image.open(path).convert('RGB'))).unsqueeze(0).float()
         images = input_transform((Image.open(path).convert('RGB'))).unsqueeze(0).float()
@@ -119,65 +114,21 @@ def main():
         #ic(images.shape) # [1, 3, 720, 1280]
         with torch.no_grad():
             result = model(images).squeeze(0)
-            #result = result[:-1]
+            result = result[:-1] # remove the last channel (void)
         print(f"result.shape {result.shape}") #debug ogni risultato è un Tensore del tipo [1, 20, 720, 1280] [batch_size, channels, height, width]
         
-        
-        
         if(method == "MaxLogit"):
-            #anomaly_result = - np.max(result.squeeze(0).data.cpu().numpy(), axis=0)[0]   
             anomaly_result = -torch.max(result, dim=0)[0]
             anomaly_result = anomaly_result.data.cpu().numpy()
         elif(method == "MaxEntropy"):
-            # da sistemare non il massimo
-            '''def get_softmax(network, image, transform=None, as_numpy=True):
-                if transform is None:
-                    transform = Compose([ToTensor(), Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
-                #x = transform(image)
-                x = ToTensor()(image)
-                if (not args.cpu):
-                    x = x.unsqueeze_(0).cuda()
-                else : 
-                    x = x.unsqueeze_(0)
-                    
-                with torch.no_grad():
-                    y = network(x)
-                probs = F.softmax(y, 1)
-                if as_numpy:
-                    probs = probs.data.cpu().numpy()[0].astype("float32")
-                return probs
-
-
-            def get_entropy(network, image, transform=None, as_numpy=True):
-                #probs = get_softmax(network, image, transform, as_numpy=False)
-                result = result.squeeze(0)
-                probs = F.softmax(result, dim=0)
-                entropy = torch.div(torch.sum(-probs * torch.log(probs), dim=1), torch.log(torch.tensor(probs.shape[1])))
-                if as_numpy:
-                    entropy = entropy.data.cpu().numpy().astype("float32")
-                return entropy'''
-
-            #anomaly_result = get_entropy(model, Image.open(path).convert('RGB'))
-            #result = result.squeeze(0)
             probs = F.softmax(result, dim=0)
             entropy = torch.div(torch.sum(-probs * torch.log(probs), dim=0), torch.log(torch.tensor(probs.shape[0])))
             anomaly_result = entropy.data.cpu().numpy().astype("float32")
-        else :#MSP
-            
-            #probabilities = F.softmax(result, dim=1)
-            #anomaly_result = 1.0 - np.max(probabilities.squeeze(0).data.cpu().numpy(), axis=0)
-            #anomaly_result = 1.0 - torch.max(F.softmax(result / args.temperature, dim=0), dim=0)[0]
-            #anomaly_result = 1.0 - np.max(result.squeeze(0).data.cpu().numpy(), axis=0) com'era prima MSP
-            
-            #result = result.squeeze(0)
+        else :# MSP
             anomaly_result = 1.0 - torch.max(F.softmax(result, dim=0), dim=0)[0]
             anomaly_result = anomaly_result.data.cpu().numpy()
-            '''ic(result)
-            ic(anomaly_result)
-            ic(result.shape)
-            ic(anomaly_result.shape)'''
-            
-                         
+
+        # Load ground truth mask
         pathGT = path.replace("images", "labels_masks")                
         if "RoadObsticle21" in pathGT:
            pathGT = pathGT.replace("webp", "png")
@@ -189,10 +140,11 @@ def main():
         mask = Image.open(pathGT)
         mask = target_transform(mask)
         ood_gts = np.array(mask)
-        print(f"ood_gts appena caricato : {ood_gts}") #debug
+        print(f"Loaded out-of-distribution ground-truths: {ood_gts}") #debug
+        
         if "RoadAnomaly" in pathGT:
             ood_gts = np.where((ood_gts==2), 1, ood_gts) #ho verificato ci sono veramente dei 2 all'interno dell'immagine
-        if "LostAndFound" in pathGT: #LostAndFound qui non entra
+        if "LostAndFound" in pathGT: # LostAndFound qui non entra
             ood_gts = np.where((ood_gts==0), 255, ood_gts)
             ood_gts = np.where((ood_gts==1), 0, ood_gts)
             ood_gts = np.where((ood_gts>1)&(ood_gts<201), 1, ood_gts)
@@ -212,6 +164,7 @@ def main():
 
     file.write( "\n")
 
+    # Calculate metrics: AUPRC and FPR@TPR95
     ood_gts = np.array(ood_gts_list) 
     anomaly_scores = np.array(anomaly_score_list)
 
@@ -229,10 +182,6 @@ def main():
 
     prc_auc = average_precision_score(val_label, val_out)
     fpr = fpr_at_95_tpr(val_out, val_label)
-
-    
-
-    #print(f'val_out : {val_out} \n val_label : {val_label}')
 
     print(f'AUPRC score: {prc_auc*100.0}')
     print(f'FPR@TPR95: {fpr*100.0}')
