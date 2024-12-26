@@ -248,7 +248,11 @@ def train(args, model, enc=False):
 
             inputs = Variable(images)
             targets = Variable(labels)
-            outputs = model(inputs, only_encode=enc)
+
+            if args.model == "erfnet":
+                outputs = model(inputs, only_encode=enc)
+            else:
+                outputs = model(inputs)
 
             #print("targets", np.unique(targets[:, 0].cpu().data.numpy()))
 
@@ -509,8 +513,10 @@ def main(args):
             #When loading encoder reinitialize weights for decoder because they are set to 0 when training dec
         model = train(args, model, False)   #Train decoder
     elif args.model == "bisenet":
+        print("========== TRAINING ===========")
         model = train(args, model)
     elif args.model == "enet":
+        print("========== TRAINING ===========")
         model = train(args, model)
     print("========== TRAINING FINISHED ===========")
 
