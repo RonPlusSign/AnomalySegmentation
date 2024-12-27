@@ -222,7 +222,7 @@ def train(args, model, enc=False):
         #print(f"Parametro sbloccato: { model.decoder.output_conv.parameters() }") 
         #print(model)
 
-    optimizer = Adam(filter(lambda p: p.requires_grad, model.parameters()),  lr=5e-4, betas=(0.9, 0.999),  eps=1e-08, weight_decay=1e-4)
+    optimizer = Adam(filter(lambda p: p.requires_grad, model.decoder.output_conv.parameters()),  lr=5e-4, betas=(0.9, 0.999),  eps=1e-08, weight_decay=1e-4)
     #scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.5) # set up scheduler     ## scheduler 1
     lambda1 = lambda epoch: pow((1-((epoch-1)/args.num_epochs)),0.9)  ## scheduler 2
     scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda1)                             ## scheduler 2
