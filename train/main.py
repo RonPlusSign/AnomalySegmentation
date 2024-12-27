@@ -214,13 +214,13 @@ def train(args, model, enc=False):
         if args.model == "erfnet":
             for param in model.decoder.output_conv.parameters():
                 param.requires_grad = True
-                print("Ci sono entrato")
-                print(f"Parametro sbloccato: {param.requires_grad}")
+                #print("Ci sono entrato")
+                #print(f"Parametro sbloccato: {param.requires_grad}")
 
         
         
-        print(f"Parametro sbloccato: { model.decoder.output_conv.parameters() }") 
-        print(model)
+        #print(f"Parametro sbloccato: { model.decoder.output_conv.parameters() }") 
+        #print(model)
 
     optimizer = Adam(filter(lambda p: p.requires_grad, model.parameters()),  lr=5e-4, betas=(0.9, 0.999),  eps=1e-08, weight_decay=1e-4)
     #scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.5) # set up scheduler     ## scheduler 1
@@ -275,7 +275,7 @@ def train(args, model, enc=False):
             #loss = criterion(outputs, targets[:, 0])
             print("Unique outputs:", outputs.shape)
             print("Unique targets:", targets.shape)
-            print("Loss value:", loss.item())
+           
             loss = criterion(outputs, targets) 
             loss.backward()
             optimizer.step()
