@@ -248,9 +248,11 @@ def train(args, model, enc=False):
 
             inputs = Variable(images)
             targets = Variable(labels)
-
+            
             if args.model == "erfnet":
-                outputs = model(inputs, only_encode=enc)
+                outputs = model(inputs, only_encode=enc) 
+            elif args.model == "bisenet":
+                outputs = model(inputs)[0]
             else:
                 outputs = model(inputs)
 
@@ -321,6 +323,8 @@ def train(args, model, enc=False):
 
             if args.model == "erfnet":
                 outputs = model(inputs, only_encode=enc) 
+            elif args.model == "bisenet":
+                outputs = model(inputs)[0]
             else:
                 outputs = model(inputs)
 
