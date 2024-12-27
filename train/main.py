@@ -189,7 +189,7 @@ def train(args, model, enc=False):
     #TODO: reduce memory in first gpu: https://discuss.pytorch.org/t/multi-gpu-training-memory-usage-in-balance/4163/4        #https://github.com/pytorch/pytorch/issues/1893
 
     #optimizer = Adam(model.parameters(), 5e-4, (0.9, 0.999),  eps=1e-08, weight_decay=2e-4)     ## scheduler 1
-    optimizer = Adam(model.parameters(), 5e-4, (0.9, 0.999),  eps=1e-08, weight_decay=1e-4)      ## scheduler 2
+    #optimizer = Adam(model.parameters(), 5e-4, (0.9, 0.999),  eps=1e-08, weight_decay=1e-4)      ## scheduler 2
 
     start_epoch = 1
     if args.resume:
@@ -218,10 +218,11 @@ def train(args, model, enc=False):
                 print(f"Parametro sbloccato: {param.requires_grad}")
 
         
-        optimizer = Adam(filter(lambda p: p.requires_grad, model.parameters()),  lr=5e-4, betas=(0.9, 0.999),  eps=1e-08, weight_decay=1e-4)
+        
         print(f"Parametro sbloccato: { model.decoder.output_conv.parameters() }") 
         print(model)
 
+    optimizer = Adam(filter(lambda p: p.requires_grad, model.parameters()),  lr=5e-4, betas=(0.9, 0.999),  eps=1e-08, weight_decay=1e-4)
     #scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.5) # set up scheduler     ## scheduler 1
     lambda1 = lambda epoch: pow((1-((epoch-1)/args.num_epochs)),0.9)  ## scheduler 2
     scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda1)                             ## scheduler 2
