@@ -70,7 +70,6 @@ class MyCoTransform(object):
 
         return input, target
 
-
 class CrossEntropyLoss2d(torch.nn.Module):
 
     def __init__(self, weight=None):
@@ -207,6 +206,14 @@ def train(args, model, enc=False):
         optimizer.load_state_dict(checkpoint['optimizer'])
         best_acc = checkpoint['best_acc']
         print("=> Loaded checkpoint at epoch {})".format(checkpoint['epoch']))
+
+    if args.FineTune:
+        for param in model.parameters():
+            param.requires_grad = False
+        
+        if args.model == "erfnet":
+            for param in model.decoder.output_conv.parameters():
+                param.requires_grad = True
 
     #scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.5) # set up scheduler     ## scheduler 1
     lambda1 = lambda epoch: pow((1-((epoch-1)/args.num_epochs)),0.9)  ## scheduler 2
@@ -440,6 +447,24 @@ def main(args):
         model = model_file.ENet(NUM_CLASSES)
 
     copyfile(args.model + ".py", savedir + '/' + args.model + ".py")
+
+    if args.FineTune :
+        weightspath = args.loadDir + args.loadWeights
+
+        def load_my_state_dict(model, state_dict):  #custom function to load model when not all dict elements
+            own_state = model.state_dict()
+            for name, param in state_dict.items():
+                if name not in own_state:
+                    if name.startswith("module."):
+                        own_state[name.split("module.")[-1]].copy_(param)
+                    else:
+                        print(name, " not loaded")
+                        continue
+                else:
+                    own_state[name].copy_(param)
+            return model
+        model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
+
     
     if args.cuda:
         model = torch.nn.DataParallel(model).cuda()
@@ -524,6 +549,8 @@ def main(args):
         model = train(args, model)
     print("========== TRAINING FINISHED ===========")
 
+
+
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--cuda', action='store_true', default=True)  #NOTE: cpu-only has not been tested so you might have to change code if you deactivate this flag
@@ -547,5 +574,8 @@ if __name__ == '__main__':
     parser.add_argument('--iouTrain', action='store_true', default=False) #recommended: False (takes more time to train otherwise)
     parser.add_argument('--iouVal', action='store_true', default=True)  
     parser.add_argument('--resume', action='store_true')    #Use this flag to load last checkpoint for training  
+
+    parser.add_argument('--FineTune', action='store_true', default=False)
+    parser.add_argument('--loadWeights', default="erfnet_pretrained.pth")
 
     main(parser.parse_args())
