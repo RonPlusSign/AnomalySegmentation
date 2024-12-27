@@ -449,7 +449,7 @@ def main(args):
     copyfile(args.model + ".py", savedir + '/' + args.model + ".py")
 
     if args.FineTune :
-        weightspath = args.loadDir + args.loadWeights
+        weightspath =f"../trained_models/{args.loadWeights}"
 
         def load_my_state_dict(model, state_dict):  #custom function to load model when not all dict elements
             own_state = model.state_dict()
@@ -464,6 +464,7 @@ def main(args):
                     own_state[name].copy_(param)
             return model
         model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
+        print(f"Import Model {args.model} with weights { args.loadWeights } to FineTune")
 
     
     if args.cuda:
