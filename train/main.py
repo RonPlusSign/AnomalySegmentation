@@ -275,6 +275,7 @@ def train(args, model, enc=False):
             #loss = criterion(outputs, targets[:, 0])
             print("Unique outputs:", outputs.shape)
             print("Unique targets:", targets.shape)
+            print(targets[:, 0].shape)
            
             loss = criterion(outputs, targets) 
             loss.backward()
