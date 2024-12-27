@@ -262,7 +262,7 @@ def train(args, model, enc=False):
                 labels = labels.cuda()
 
             inputs = Variable(images)
-            targets = Variable(labels)
+            targets = Variable(labels).squeeze(1)  # Rimuovi la dimensione extra
 
             if args.model == "erfnet":
                 outputs = model(inputs, only_encode=enc)
