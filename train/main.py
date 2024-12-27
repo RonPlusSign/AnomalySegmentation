@@ -214,6 +214,7 @@ def train(args, model, enc=False):
         if args.model == "erfnet":
             for param in model.decoder.output_conv.parameters():
                 param.requires_grad = True
+                print("Ci sono entrato")
         
         optimizer = Adam(filter(lambda p: p.requires_grad, model.parameters()),  lr=5e-4, betas=(0.9, 0.999),  eps=1e-08, weight_decay=1e-4)
 
