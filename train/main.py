@@ -189,7 +189,7 @@ def train(args, model, enc=False):
     #TODO: reduce memory in first gpu: https://discuss.pytorch.org/t/multi-gpu-training-memory-usage-in-balance/4163/4        #https://github.com/pytorch/pytorch/issues/1893
 
     #optimizer = Adam(model.parameters(), 5e-4, (0.9, 0.999),  eps=1e-08, weight_decay=2e-4)     ## scheduler 1
-    #optimizer = Adam(model.parameters(), 5e-4, (0.9, 0.999),  eps=1e-08, weight_decay=1e-4)      ## scheduler 2
+    optimizer = Adam(model.parameters(), 5e-4, (0.9, 0.999),  eps=1e-08, weight_decay=1e-4)      ## scheduler 2
 
     start_epoch = 1
     if args.resume:
@@ -211,19 +211,21 @@ def train(args, model, enc=False):
         for param in model.parameters():
             param.requires_grad = False
         
-        if args.model == "erfnet":
+        if args.model == "erfnet": 
             for param in model.module.decoder.output_conv.parameters():
                 param.requires_grad = True
-                #print("Ci sono entrato")
-                #print(f"Parametro sbloccato: {param.requires_grad}")
-
-        
-        
-        #print(f"Parametro sbloccato: { model.decoder.output_conv.parameters() }") 
-        #print(model)
-
-    optimizer = Adam(filter(lambda p: p.requires_grad, model.module.decoder.output_conv.parameters()),  lr=5e-4, betas=(0.9, 0.999),  eps=1e-08, weight_decay=1e-4)
-    #optimizer = Adam( model.decoder.output_conv.parameters() ,  lr=5e-4, betas=(0.9, 0.999),  eps=1e-08, weight_decay=1e-4)
+            
+            # Uses filter to ensure only the trainable parameters are optimized.
+            optimizer = Adam(filter(lambda p: p.requires_grad, model.module.decoder.output_conv.parameters()),  lr=5e-5, betas=(0.9, 0.999),  eps=1e-08, weight_decay=2e-4)
+            
+        elif args.model == "bisenet":
+            for param in model.module.output_conv.parameters():
+                param.requires_grad = True
+            optimizer = SGD(model.parameters(), lr=2.5e-3, momentum=0.9, weight_decay=1e-4)
+        else: #enet
+            for param in model.module.transposed_conv.parameters():
+                param.requires_grad = True
+            optimizer = Adam(filter(lambda p: p.requires_grad, model.module.transposed_conv.parameters()),  lr=5e-5, betas=(0.9, 0.999),  eps=1e-08, weight_decay=2e-4)
     
     #scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.5) # set up scheduler     ## scheduler 1
     lambda1 = lambda epoch: pow((1-((epoch-1)/args.num_epochs)),0.9)  ## scheduler 2
@@ -265,9 +267,11 @@ def train(args, model, enc=False):
 
             inputs = Variable(images)
             targets = Variable(labels)
-
+            
             if args.model == "erfnet":
-                outputs = model(inputs, only_encode=enc)
+                outputs = model(inputs, only_encode=enc) 
+            elif args.model == "bisenet":
+                outputs = model(inputs)[0]
             else:
                 outputs = model(inputs)
 
@@ -344,6 +348,8 @@ def train(args, model, enc=False):
 
             if args.model == "erfnet":
                 outputs = model(inputs, only_encode=enc) 
+            elif args.model == "bisenet":
+                outputs = model(inputs)[0]
             else:
                 outputs = model(inputs)
 
@@ -536,13 +542,13 @@ def main(args):
     """
     if args.model == "erfnet":
         #train(args, model)
-        if (not args.decoder):
+        if (not args.decoder) and (not args.FineTune):
             print("========== ENCODER TRAINING ===========")
             model = train(args, model, True) #Train encoder
         #CAREFUL: for some reason, after training encoder alone, the decoder gets weights=0. 
         #We must reinit decoder weights or reload network passing only encoder in order to train decoder
         print("========== DECODER TRAINING ===========")
-        if (not args.state):
+        if (not args.state) and (not args.FineTune):
             if args.pretrainedEncoder:
                 print("Loading encoder pretrained in imagenet")
                 from erfnet_imagenet import ERFNet as ERFNet_imagenet
@@ -572,7 +578,7 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--cuda', action='store_true', default=False)  #NOTE: cpu-only has not been tested so you might have to change code if you deactivate this flag
     parser.add_argument('--model', default="erfnet")
-    parser.add_argument('--state')
+    parser.add_argument('--state') # TODO remove state and use loadWeights
 
     parser.add_argument('--port', type=int, default=8097)
     parser.add_argument('--datadir', default=os.getenv("HOME") + "/datasets/cityscapes/")

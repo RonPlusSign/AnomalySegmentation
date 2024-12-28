@@ -54,13 +54,14 @@ def main():
     )  
     parser.add_argument('--loadDir',default="/content/AnomalySegmentation/trained_models/")
     parser.add_argument('--loadWeights', default="erfnet_pretrained.pth")
-    parser.add_argument('--loadModel', default="erfnet.py")
+    parser.add_argument('--model', default="erfnet")
     parser.add_argument('--subset', default="val")  #can be val or train (must have labels)
     parser.add_argument('--datadir', default="/home/shyam/ViT-Adapter/segmentation/data/cityscapes/")
     parser.add_argument('--num-workers', type=int, default=4)
     parser.add_argument('--batch-size', type=int, default=1)
     parser.add_argument('--cpu', action='store_true')
     parser.add_argument('--method',default="MSP") #can be MSP or MaxLogit or MaxEntropy
+    parser.add_argument('--void', action='store_true')
     
     parser.add_argument('--temperature', default=0) # add the path of the model absolute path
     args = parser.parse_args()
@@ -73,7 +74,7 @@ def main():
         open(f'results-{method}.txt', 'w').close()
     file = open(f'results-{method}.txt', 'a')
 
-    modelpath = args.loadDir + args.loadModel
+    modelpath = args.loadDir + args.model + ".py"
     weightspath = args.loadDir + args.loadWeights
 
     temperature = float(args.temperature)
@@ -109,24 +110,28 @@ def main():
         print(path)
         #images = torch.from_numpy(np.array(Image.open(path).convert('RGB'))).unsqueeze(0).float()
         images = input_transform((Image.open(path).convert('RGB'))).unsqueeze(0).float()
-        #ic(images.shape) # [1, 720, 1280, 3]
-        #images = images.permute(0,3,1,2)
-        #ic(images.shape) # [1, 3, 720, 1280]
-        with torch.no_grad():
-            result = model(images).squeeze(0)
-            result = result[:-1] # remove the last channel (void)
-        print(f"result.shape {result.shape}") #debug ogni risultato è un Tensore del tipo [1, 20, 720, 1280] [batch_size, channels, height, width]
         
-        if(method == "MaxLogit"):
-            anomaly_result = -torch.max(result, dim=0)[0]
-            anomaly_result = anomaly_result.data.cpu().numpy()
-        elif(method == "MaxEntropy"):
-            probs = F.softmax(result, dim=0)
-            entropy = torch.div(torch.sum(-probs * torch.log(probs), dim=0), torch.log(torch.tensor(probs.shape[0])))
-            anomaly_result = entropy.data.cpu().numpy().astype("float32")
-        else :# MSP
-            anomaly_result = 1.0 - torch.max(F.softmax(result, dim=0), dim=0)[0]
-            anomaly_result = anomaly_result.data.cpu().numpy()
+        with torch.no_grad():
+            if args.model == "bisenet":
+                result = model(images)[0].squeeze(0)
+            else: #TODO check ENet output
+                result = model(images).squeeze(0)
+
+        if args.void:
+            anomaly_result = F.softmax(result, dim=0)[-1]
+        else:
+            result = result[:-1] # remove the last channel (void)
+            
+            if(method == "MaxLogit"):
+                anomaly_result = -torch.max(result, dim=0)[0]
+                anomaly_result = anomaly_result.data.cpu().numpy()
+            elif(method == "MaxEntropy"):
+                probs = F.softmax(result, dim=0)
+                entropy = torch.div(torch.sum(-probs * torch.log(probs), dim=0), torch.log(torch.tensor(probs.shape[0])))
+                anomaly_result = entropy.data.cpu().numpy().astype("float32")
+            else :# MSP
+                anomaly_result = 1.0 - torch.max(F.softmax(result, dim=0), dim=0)[0]
+                anomaly_result = anomaly_result.data.cpu().numpy()
 
         # Load ground truth mask
         pathGT = path.replace("images", "labels_masks")                
