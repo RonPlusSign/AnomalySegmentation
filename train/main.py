@@ -228,7 +228,10 @@ def train(args, model, enc=False):
         else: #enet
             for param in model.module.transposed_conv.parameters():
                 param.requires_grad = True
-            optimizer = Adam(filter(lambda p: p.requires_grad, model.module.transposed_conv.parameters()),  lr=5e-5, betas=(0.9, 0.999),  eps=1e-08, weight_decay=2e-4)
+            if args.cuda :
+                optimizer = Adam(filter(lambda p: p.requires_grad, model.module.transposed_conv.parameters()),  lr=5e-5, betas=(0.9, 0.999),  eps=1e-08, weight_decay=2e-4)
+            else:
+                optimizer = Adam(filter(lambda p: p.requires_grad, model.transposed_conv.parameters()),  lr=5e-5, betas=(0.9, 0.999),  eps=1e-08, weight_decay=2e-4)
     
     #scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.5) # set up scheduler     ## scheduler 1
     lambda1 = lambda epoch: pow((1-((epoch-1)/args.num_epochs)),0.9)  ## scheduler 2
