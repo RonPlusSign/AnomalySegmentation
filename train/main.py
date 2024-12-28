@@ -284,7 +284,7 @@ def train(args, model, enc=False):
             print(targets[:, 0].shape)
             loss = criterion(outputs, targets[:, 0])
             #loss = criterion(outputs, targets) 
-            loss.requires_grad = True
+            #loss.requires_grad = True
             loss.backward()
             optimizer.step()
 
