@@ -497,7 +497,7 @@ def main(args):
                     own_state[name].copy_(param)
             return model
         if args.model == "enet":
-            model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage).state_dict)
+            model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage)["state_dict"])
         else:
             model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
         print(f"Import Model {args.model} with weights { args.loadWeights } to FineTune")
