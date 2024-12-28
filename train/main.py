@@ -96,7 +96,7 @@ def calculate_class_weights(dataset, num_classes):
     class_weights_tensor = torch.tensor(class_weights, dtype=torch.float32)
     return class_weights_tensor
 
-
+@torch.compile
 def train(args, model, enc=False):
     best_acc = 0
     
