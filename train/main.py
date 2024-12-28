@@ -211,8 +211,8 @@ def train(args, model, enc=False):
         for param in model.parameters():
             param.requires_grad = False
         
-        if args.model == "erfnet":
-            for param in model.decoder.output_conv.parameters():
+        if args.model == "erfnet": 
+            for param in model.module.decoder.output_conv.parameters():
                 param.requires_grad = True
                 #print("Ci sono entrato")
                 #print(f"Parametro sbloccato: {param.requires_grad}")
