@@ -212,7 +212,7 @@ def train(args, model, enc=False):
             param.requires_grad = False
         
         if args.model == "erfnet":
-            for param in model.decoder.output_conv.parameters():
+            for param in model.module.decoder.output_conv.parameters():
                 param.requires_grad = True
                 #print("Ci sono entrato")
                 #print(f"Parametro sbloccato: {param.requires_grad}")
@@ -222,7 +222,7 @@ def train(args, model, enc=False):
         #print(f"Parametro sbloccato: { model.decoder.output_conv.parameters() }") 
         #print(model)
 
-    optimizer = Adam(filter(lambda p: p.requires_grad, model.decoder.output_conv.parameters()),  lr=5e-4, betas=(0.9, 0.999),  eps=1e-08, weight_decay=1e-4)
+    optimizer = Adam(filter(lambda p: p.requires_grad, model.module.decoder.output_conv.parameters()),  lr=5e-4, betas=(0.9, 0.999),  eps=1e-08, weight_decay=1e-4)
     #optimizer = Adam( model.decoder.output_conv.parameters() ,  lr=5e-4, betas=(0.9, 0.999),  eps=1e-08, weight_decay=1e-4)
     
     #scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.5) # set up scheduler     ## scheduler 1
