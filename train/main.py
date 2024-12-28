@@ -598,7 +598,7 @@ if __name__ == '__main__':
     parser.add_argument('--iouVal', action='store_true', default=True)  
     parser.add_argument('--resume', action='store_true')    #Use this flag to load last checkpoint for training  
 
-    parser.add_argument('--fineTune', action='store_true', default=False)
+    parser.add_argument('--FineTune', action='store_true', default=False)
     parser.add_argument('--loadWeights', default="erfnet_pretrained.pth")
 
     main(parser.parse_args())
