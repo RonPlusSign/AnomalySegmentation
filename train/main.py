@@ -224,7 +224,7 @@ def train(args, model, enc=False):
 
     # Uses filter to ensure only the trainable parameters are optimized.
     # TODO: check learning rate
-    optimizer = Adam(filter(lambda p: p.requires_grad, model.decoder.output_conv.parameters()),  lr=5e-4, betas=(0.9, 0.999),  eps=1e-08, weight_decay=1e-4)
+    optimizer = Adam(filter(lambda p: p.requires_grad, model.module.decoder.output_conv.parameters()),  lr=5e-4, betas=(0.9, 0.999),  eps=1e-08, weight_decay=1e-4)
     #optimizer = Adam( model.decoder.output_conv.parameters() ,  lr=5e-4, betas=(0.9, 0.999),  eps=1e-08, weight_decay=1e-4)
     
     #scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.5) # set up scheduler     ## scheduler 1
