@@ -222,6 +222,8 @@ def train(args, model, enc=False):
         #print(f"Parametro sbloccato: { model.decoder.output_conv.parameters() }") 
         #print(model)
 
+    # Uses filter to ensure only the trainable parameters are optimized.
+    # TODO: check learning rate
     optimizer = Adam(filter(lambda p: p.requires_grad, model.decoder.output_conv.parameters()),  lr=5e-4, betas=(0.9, 0.999),  eps=1e-08, weight_decay=1e-4)
     #optimizer = Adam( model.decoder.output_conv.parameters() ,  lr=5e-4, betas=(0.9, 0.999),  eps=1e-08, weight_decay=1e-4)
     
@@ -596,7 +598,7 @@ if __name__ == '__main__':
     parser.add_argument('--iouVal', action='store_true', default=True)  
     parser.add_argument('--resume', action='store_true')    #Use this flag to load last checkpoint for training  
 
-    parser.add_argument('--FineTune', action='store_true', default=False)
-    parser.add_argument('--loadWeights', default="erfnet_pretrained.pth")
+    parser.add_argument('--fine-tune', action='store_true', default=False)
+    parser.add_argument('--load-weights', default="erfnet_pretrained.pth")
 
     main(parser.parse_args())
