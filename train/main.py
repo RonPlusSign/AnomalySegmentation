@@ -77,8 +77,8 @@ class CrossEntropyLoss2d(torch.nn.Module):
     def __init__(self, weight=None):
         super().__init__()
 
-        #self.loss = torch.nn.NLLLoss2d(weight)
-        self.loss = torch.nn.NLLLoss(weight)
+        self.loss = torch.nn.NLLLoss2d(weight)
+        #self.loss = torch.nn.NLLLoss(weight)
 
     def forward(self, outputs, targets):
         return self.loss(torch.nn.functional.log_softmax(outputs, dim=1), targets)
@@ -99,7 +99,7 @@ def calculate_class_weights(dataset, num_classes):
     class_weights_tensor = torch.tensor(class_weights, dtype=torch.float32)
     return class_weights_tensor
 
-@torch.compile
+#@torch.compile
 def train(args, model, enc=False):
     best_acc = 0
     
