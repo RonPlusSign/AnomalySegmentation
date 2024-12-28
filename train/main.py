@@ -226,11 +226,14 @@ def train(args, model, enc=False):
                 param.requires_grad = True
             optimizer = SGD(model.parameters(), lr=2.5e-3, momentum=0.9, weight_decay=1e-4)
         else: #enet
-            for param in model.module.transposed_conv.parameters():
-                param.requires_grad = True
+            
             if args.cuda :
+                for param in model.module.transposed_conv.parameters():
+                    param.requires_grad = True
                 optimizer = Adam(filter(lambda p: p.requires_grad, model.module.transposed_conv.parameters()),  lr=5e-5, betas=(0.9, 0.999),  eps=1e-08, weight_decay=2e-4)
             else:
+                for param in model.transposed_conv.parameters():
+                    param.requires_grad = True
                 optimizer = Adam(filter(lambda p: p.requires_grad, model.transposed_conv.parameters()),  lr=5e-5, betas=(0.9, 0.999),  eps=1e-08, weight_decay=2e-4)
     
     #scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.5) # set up scheduler     ## scheduler 1
