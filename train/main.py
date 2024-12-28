@@ -28,6 +28,8 @@ from iouEval import iouEval, getColorEntry
 
 from shutil import copyfile
 
+from pprint import pprint
+
 NUM_CHANNELS = 3
 NUM_CLASSES = 20  # 19 classes + void
 
@@ -476,7 +478,7 @@ def main(args):
 
         def load_my_state_dict(model, state_dict):  #custom function to load model when not all dict elements
             own_state = model.state_dict()
-            print(own_state)
+            pprint(own_state)
             for name, param in state_dict.items():
                 if name not in own_state:
                     if name.startswith("module."):
