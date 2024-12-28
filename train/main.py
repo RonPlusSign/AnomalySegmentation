@@ -189,7 +189,7 @@ def train(args, model, enc=False):
     #TODO: reduce memory in first gpu: https://discuss.pytorch.org/t/multi-gpu-training-memory-usage-in-balance/4163/4        #https://github.com/pytorch/pytorch/issues/1893
 
     #optimizer = Adam(model.parameters(), 5e-4, (0.9, 0.999),  eps=1e-08, weight_decay=2e-4)     ## scheduler 1
-    optimizer = Adam(model.parameters(), 5e-4, (0.9, 0.999),  eps=1e-08, weight_decay=1e-4)      ## scheduler 2
+    #optimizer = Adam(model.parameters(), 5e-4, (0.9, 0.999),  eps=1e-08, weight_decay=1e-4)      ## scheduler 2
 
     start_epoch = 1
     if args.resume:
@@ -214,7 +214,17 @@ def train(args, model, enc=False):
         if args.model == "erfnet":
             for param in model.decoder.output_conv.parameters():
                 param.requires_grad = True
+                #print("Ci sono entrato")
+                #print(f"Parametro sbloccato: {param.requires_grad}")
 
+        
+        
+        #print(f"Parametro sbloccato: { model.decoder.output_conv.parameters() }") 
+        #print(model)
+
+    optimizer = Adam(filter(lambda p: p.requires_grad, model.decoder.output_conv.parameters()),  lr=5e-4, betas=(0.9, 0.999),  eps=1e-08, weight_decay=1e-4)
+    #optimizer = Adam( model.decoder.output_conv.parameters() ,  lr=5e-4, betas=(0.9, 0.999),  eps=1e-08, weight_decay=1e-4)
+    
     #scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.5) # set up scheduler     ## scheduler 1
     lambda1 = lambda epoch: pow((1-((epoch-1)/args.num_epochs)),0.9)  ## scheduler 2
     scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda1)                             ## scheduler 2
@@ -266,7 +276,13 @@ def train(args, model, enc=False):
             #print("targets", np.unique(targets[:, 0].cpu().data.numpy()))
 
             optimizer.zero_grad()
+            
+            print("Unique outputs:", outputs.shape)
+            print("Unique targets:", targets.shape)
+            print(targets[:, 0].shape)
             loss = criterion(outputs, targets[:, 0])
+            #loss = criterion(outputs, targets) 
+            loss.requires_grad = True
             loss.backward()
             optimizer.step()
 
@@ -453,7 +469,7 @@ def main(args):
     copyfile(args.model + ".py", savedir + '/' + args.model + ".py")
 
     if args.FineTune :
-        weightspath = args.loadDir + args.loadWeights
+        weightspath =f"../trained_models/{args.loadWeights}"
 
         def load_my_state_dict(model, state_dict):  #custom function to load model when not all dict elements
             own_state = model.state_dict()
@@ -468,6 +484,7 @@ def main(args):
                     own_state[name].copy_(param)
             return model
         model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
+        print(f"Import Model {args.model} with weights { args.loadWeights } to FineTune")
 
     
     if args.cuda:
@@ -557,7 +574,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.add_argument('--cuda', action='store_true', default=True)  #NOTE: cpu-only has not been tested so you might have to change code if you deactivate this flag
+    parser.add_argument('--cuda', action='store_true', default=False)  #NOTE: cpu-only has not been tested so you might have to change code if you deactivate this flag
     parser.add_argument('--model', default="erfnet")
     parser.add_argument('--state')
 
