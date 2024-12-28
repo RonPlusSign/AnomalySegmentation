@@ -279,9 +279,9 @@ def train(args, model, enc=False):
 
             optimizer.zero_grad()
             
-            print("Unique outputs:", outputs.shape)
-            print("Unique targets:", targets.shape)
-            print(targets[:, 0].shape)
+            #print("Unique outputs:", outputs.shape)
+            #print("Unique targets:", targets.shape)
+            #print(targets[:, 0].shape)
             loss = criterion(outputs, targets[:, 0])
             #loss = criterion(outputs, targets) 
             #loss.requires_grad = True
