@@ -484,7 +484,7 @@ def main(args):
 
         def load_my_state_dict(model, state_dict):  #custom function to load model when not all dict elements
             own_state = model.state_dict()
-            
+            print(type(state_dict))
             for name, param in state_dict.items():
                 if name not in own_state:
                     if name.startswith("module."):
