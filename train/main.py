@@ -207,7 +207,7 @@ def train(args, model, enc=False):
         best_acc = checkpoint['best_acc']
         print("=> Loaded checkpoint at epoch {})".format(checkpoint['epoch']))
 
-    if args.fine-tune:
+    if args.FineTune:
         for param in model.parameters():
             param.requires_grad = False
         
@@ -470,7 +470,7 @@ def main(args):
 
     copyfile(args.model + ".py", savedir + '/' + args.model + ".py")
 
-    if args.fine-tune :
+    if args.FineTune :
         weightspath =f"../trained_models/{args.loadWeights}"
 
         def load_my_state_dict(model, state_dict):  #custom function to load model when not all dict elements
@@ -598,7 +598,7 @@ if __name__ == '__main__':
     parser.add_argument('--iouVal', action='store_true', default=True)  
     parser.add_argument('--resume', action='store_true')    #Use this flag to load last checkpoint for training  
 
-    parser.add_argument('--fine-tune', action='store_true', default=False)
-    parser.add_argument('--load-weights', default="erfnet_pretrained.pth")
+    parser.add_argument('--fineTune', action='store_true', default=False)
+    parser.add_argument('--loadWeights', default="erfnet_pretrained.pth")
 
     main(parser.parse_args())
