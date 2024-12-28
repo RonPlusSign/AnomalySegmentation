@@ -207,7 +207,7 @@ def train(args, model, enc=False):
         best_acc = checkpoint['best_acc']
         print("=> Loaded checkpoint at epoch {})".format(checkpoint['epoch']))
 
-    if args.FineTune:
+    if args.fine-tune:
         for param in model.parameters():
             param.requires_grad = False
         
@@ -470,7 +470,7 @@ def main(args):
 
     copyfile(args.model + ".py", savedir + '/' + args.model + ".py")
 
-    if args.FineTune :
+    if args.fine-tune :
         weightspath =f"../trained_models/{args.loadWeights}"
 
         def load_my_state_dict(model, state_dict):  #custom function to load model when not all dict elements
