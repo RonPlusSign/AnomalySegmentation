@@ -17,6 +17,7 @@ from temperature_scaling import ModelWithTemperature
 import torch.nn.functional as F # aggiunto io 
 from torchvision.transforms import Compose, ToTensor, Normalize, Resize
 from enet import ENet
+from bisenet import BiSeNetV1
 import sys
 seed = 42
 
@@ -86,6 +87,8 @@ def main():
         model = ERFNet(NUM_CLASSES)
     elif args.model =="enet":
         model = ENet(NUM_CLASSES)
+    elif args.model == "bisenet":
+        model = BiSeNetV1(NUM_CLASSES)
 
     if (not args.cpu):
         model = torch.nn.DataParallel(model).cuda()
