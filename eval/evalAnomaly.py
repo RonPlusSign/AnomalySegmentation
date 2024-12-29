@@ -125,6 +125,7 @@ def main():
 
         if args.void:
             anomaly_result = F.softmax(result, dim=0)[-1]
+            anomaly_result = anomaly_result.data.cpu().numpy()
         else:
             result = result[:-1] # remove the last channel (void)
             
