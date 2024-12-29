@@ -505,7 +505,7 @@ def main(args):
                         print(f"Size mismatch for {name}: {own_state[name].size()} vs {param.size()}")
                     if name == "conv_out.conv_out.weight":
                         new_param = torch.zeros(20)
-                        new_param[:19] = param
+                        new_param[:18] = param
                         own_state[name].copy_(new_param)
                     else:
                         own_state[name].copy_(param)
