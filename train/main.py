@@ -206,7 +206,8 @@ def train(args, model, enc=False):
         checkpoint = torch.load(filenameCheckpoint)
         start_epoch = checkpoint['epoch']
         #model.load_state_dict(checkpoint['state_dict'])
-        model.load_state_dict(key.replace("module.", ""): value for key, value in checkpoint['state_dict'].items())
+        state_dict = {key.replace("module.", ""): value for key, value in checkpoint['state_dict'].items()}
+        model.load_state_dict(state_dict)
         
         optimizer.load_state_dict(checkpoint['optimizer'])
         best_acc = checkpoint['best_acc']
