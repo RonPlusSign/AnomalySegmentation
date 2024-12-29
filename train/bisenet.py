@@ -326,7 +326,7 @@ class BiSeNetV1(nn.Module):
         return wd_params, nowd_params, lr_mul_wd_params, lr_mul_nowd_params
 
 
-if __name__ == "__main__":
+'''if __name__ == "__main__":
     net = BiSeNetV1(19)
     net.cuda()
     net.eval()
@@ -336,4 +336,4 @@ if __name__ == "__main__":
     print(out16.shape)
     print(out32.shape)
 
-    net.get_params()
+    net.get_params()'''
