@@ -500,6 +500,8 @@ def main(args):
                         print(name, " not loaded")
                         continue
                 else:
+                    if own_state[name].size() != param.size():
+                            print(f"Size mismatch for {name}: {own_state[name].size()} vs {param.size()}")
                     own_state[name].copy_(param)
             return model
         if args.model == "enet":
