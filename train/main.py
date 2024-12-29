@@ -225,7 +225,7 @@ def train(args, model, enc=False):
             optimizer = Adam(filter(lambda p: p.requires_grad, model.module.decoder.output_conv.parameters()),  lr=5e-5, betas=(0.9, 0.999),  eps=1e-08, weight_decay=2e-4)
             
         elif args.model == "bisenet":
-            for param in model.module.output_conv.parameters():
+            for param in model.module.conv_out.parameters():
                 param.requires_grad = True
             optimizer = SGD(model.parameters(), lr=2.5e-3, momentum=0.9, weight_decay=1e-4)
         else: #enet
