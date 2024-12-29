@@ -82,9 +82,9 @@ def main():
 
     print ("Loading model: " + modelpath)
     print ("Loading weights: " + weightspath)
-    if model == "erfnet":
+    if args.model == "erfnet":
         model = ERFNet(NUM_CLASSES)
-    elif model =="enet":
+    elif args.model =="enet":
         model = ENet(NUM_CLASSES)
 
     if (not args.cpu):
