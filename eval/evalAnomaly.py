@@ -74,7 +74,7 @@ def main():
         open(f'results-{method}.txt', 'w').close()
     file = open(f'results-{method}.txt', 'a')
 
-    modelpath = args.loadDir + args.model + ".py"
+    modelpath = args.loadDir +"/" +args.model + ".py"
     weightspath = args.loadDir + args.loadWeights
 
     temperature = float(args.temperature)
