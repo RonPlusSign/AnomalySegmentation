@@ -501,9 +501,14 @@ def main(args):
                         continue
                 else:
                     if own_state[name].size() != param.size():
-                        print(f"{name} not in own_state")
+                        print(f"{name} in own_state")
                         print(f"Size mismatch for {name}: {own_state[name].size()} vs {param.size()}")
-                    own_state[name].copy_(param)
+                    if name == "conv_out.conv_out.weight":
+                        new_param = torch.zeros(own_state[key].size())
+                        new_param[:own_state[key].size()] = param
+                        own_state[name].copy_(new_param)
+                    else:
+                        own_state[name].copy_(param)
             return model
         if args.model == "enet":
             model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage)["state_dict"])
