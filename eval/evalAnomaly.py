@@ -16,6 +16,7 @@ from icecream import ic
 from temperature_scaling import ModelWithTemperature
 import torch.nn.functional as F # aggiunto io 
 from torchvision.transforms import Compose, ToTensor, Normalize, Resize
+from enet import ENet
 import sys
 seed = 42
 
@@ -81,7 +82,10 @@ def main():
 
     print ("Loading model: " + modelpath)
     print ("Loading weights: " + weightspath)
-    model = ERFNet(NUM_CLASSES)
+    if model == "erfnet":
+        model = ERFNet(NUM_CLASSES)
+    elif model =="enet":
+        model = ENet(NUM_CLASSES)
 
     if (not args.cpu):
         model = torch.nn.DataParallel(model).cuda()
