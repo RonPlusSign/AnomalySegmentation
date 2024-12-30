@@ -492,8 +492,8 @@ def main(args):
             for name, param in state_dict.items():
                 if name not in own_state:
                     if name.startswith("module."):
-                        if own_state[name].size() != param.size():
-                            print(f"Size mismatch for {name}: {own_state[name].size()} vs {param.size()}")
+                        '''if own_state[name].size() != param.size():
+                            print(f"Size mismatch for {name}: {own_state[name].size()} vs {param.size()}")'''
     
                         own_state[name.split("module.")[-1]].copy_(param)
                     else:
