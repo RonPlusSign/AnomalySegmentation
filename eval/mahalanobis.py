@@ -97,7 +97,7 @@ def main():
         default="/content/Validation_Dataset/RoadObsticle21/images/*.webp",
         help="A single glob pattern such as 'directory/*.jpg'",
     )  
-    parser.add_argument('--loadDir',default="/content/AnomalySegmentation/trained_models/")
+    parser.add_argument('--loadDir',default="/content/AnomalySegmentation")
     
     parser.add_argument('--loadWeights', default="erfnet_pretrained.pth")
     parser.add_argument('--model', default="erfnet")
@@ -106,6 +106,7 @@ def main():
     parser.add_argument('--num-workers', type=int, default=4)
     parser.add_argument('--batch-size', type=int, default=1)
     parser.add_argument('--cpu', action='store_true')
+    parser.add_argument('--mean', default = '/save/mean_cityscapes_erfnet.npy')
 
 
     args = parser.parse_args()
@@ -115,7 +116,8 @@ def main():
  
     #modelpath = args.loadDir +"/" +args.model + ".py"
     weightspath = args.loadDir + args.loadWeights
-    
+    mean_is_computed = len(args.mean) > 0
+    mean_path = args.loadDir + args.mean
 
 
     print ("Loading model: " + args.model)
@@ -124,6 +126,8 @@ def main():
     
     assert os.path.exists(args.datadir), "Error: datadir (dataset directory) could not be loaded"
 
+    if mean_is_computed :
+        pre_computed_mean = np.load(mean_path)
     # Augmentations and Normalizations
     co_transform = MyCoTransform(False, augment=False, height=512)#1024)
     co_transform_val = MyCoTransform(False, augment=False, height=512)#1024)
@@ -171,19 +175,22 @@ def main():
 
     
     sum_dataset = np.zeros((20, 512, 1024), dtype=np.float32)
+    
+    cov_matrices = np.zeros((num_classes, height * width, height * width), dtype=np.float32)
+
     num_images = 0 
     print ("Model and weights LOADED successfully")
     model.eval()
     
     for step, (images, labels) in enumerate(loader):
-        
+        print(f"-----------{step}-----------")
         #images = torch.from_numpy(np.array(Image.open(path).convert('RGB'))).unsqueeze(0).float()
         #images = input_transform((Image.open(path).convert('RGB'))).unsqueeze(0).float()
         if not args.cpu:
                 images = images.cuda()
                 #labels = labels.cuda()
-        print(f"images {images.shape}")
-        print(f"labels {labels.shape}")
+        #print(f"images {images.shape}")
+        #print(f"labels {labels.shape}")
        
             
         output = None
@@ -194,15 +201,38 @@ def main():
             else: #TODO check ENet output
                 result = model(images).squeeze(0)
                 output = result.data.cpu().numpy()
-                print(f"output {output.shape}")
-        sum_dataset += output
-        num_images +=1
+                #print(f"output {output.shape}")
+        if not mean_is_computed : 
+            sum_dataset += output
+            
+        else : # calcolo la covarianza
+            for cls in range(num_classes):
+                # Centrare rispetto alla media della classe
+                centered = output[cls] - pre_computed_mean[cls]  # Forma (H, W)
 
-    print(f"sum_dataset : {sum_dataset}")
-    print(f"num_images  : {num_images}")
-    mean = sum_dataset / num_images
-    np.save(f"mean_cityscapes_{args.model}.npy", mean)
-    print(f"Mean output saved as 'mean_cityscapes_{args.model}.npy'")
+                # Appiattire localmente (H x W)
+                centered_flattened = centered.flatten()
+
+                # Accumulare il prodotto centrato
+                cov_matrices[cls] += np.outer(centered_flattened, centered_flattened) 
+                
+        num_images +=1
+                    
+    if not mean_is_computed:
+        print(f"sum_dataset : {sum_dataset.shape}")
+        print(f"num_images  : {num_images}")
+        mean = sum_dataset / num_images
+        print(f"mean : {mean.shape}")
+        np.save(f"{args.loadDir}/save/mean_cityscapes_{args.model}.npy", mean)
+        print(f"Mean output saved as '{args.loadDir}/save/mean_cityscapes_{args.model}.npy'")
+    else : 
+        # Normalizza ogni matrice di covarianza
+        cov_matrices /= num_images
+
+        # Salva le matrici di covarianza per ogni classe
+        np.save(f"{args.loadDir}/save/cov_matrices_{args.model}.npy", cov_matrices)
+        print(f"Covariance matrices saved as '{args.loadDir}/save/cov_matrices_{args.model}.npy'")
+        
  
 
 if __name__ == '__main__':
