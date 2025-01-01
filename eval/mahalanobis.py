@@ -206,7 +206,7 @@ def main():
             sum_dataset += output
             
         else : # calcolo la covarianza
-            for cls in range(num_classes):
+            for cls in range(20):
                 # Centrare rispetto alla media della classe
                 centered = output[cls] - pre_computed_mean[cls]  # Forma (H, W)
 
