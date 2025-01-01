@@ -228,7 +228,7 @@ def main():
                     block_i = centered_flattened[i:i + block_size]
 
                     # Calcola il prodotto esterno tra il blocco centrato e se stesso
-                    block_cov = np.outer(block_i, block_i)
+                    block_cov = torch.outer(block_i, block_i)
 
                     # Accumula il blocco nella posizione corretta di cov_matrices
                     cov_matrices[c, i:i + block_size, i:i + block_size] += block_cov
