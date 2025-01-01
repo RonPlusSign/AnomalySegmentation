@@ -220,7 +220,7 @@ def main():
                 #print("qui")
                 # Accumulare il prodotto centrato
                 #cov_matrices[c] += np.outer(centered_flattened, centered_flattened.T) 
-                block_size = 1000  # Ad esempio, suddividi in blocchi di 10.000
+                block_size = 500  # Ad esempio, suddividi in blocchi di 10.000
                 n = len(centered_flattened)
 
                 for i in range(0, n, block_size):
