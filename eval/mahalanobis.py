@@ -231,6 +231,7 @@ def main():
 
                     # Accumula il blocco nella posizione corretta di cov_matrices
                     cov_matrices[c, i:i + block_size, i:i + block_size] += block_cov
+                    del block_cov, block_i
                 
         num_images +=1
                     
