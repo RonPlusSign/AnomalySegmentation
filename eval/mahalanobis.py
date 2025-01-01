@@ -170,7 +170,8 @@ def main():
     model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
 
     
-
+    sum_dataset = np.zeros((20, 512, 1024), dtype=np.float32)
+    num_images = 0 
     print ("Model and weights LOADED successfully")
     model.eval()
     
@@ -194,65 +195,11 @@ def main():
                 result = model(images).squeeze(0)
                 output = result.data.cpu().numpy()
                 print(f"output {output.shape}")
-        
-        
+        sum_dataset += output
+        num_images +=1
 
-        # Load ground truth mask
-        pathGT = path.replace("images", "labels_masks")                
-        if "RoadObsticle21" in pathGT:
-           pathGT = pathGT.replace("webp", "png")
-        if "fs_static" in pathGT:
-           pathGT = pathGT.replace("jpg", "png")                
-        if "RoadAnomaly" in pathGT:
-           pathGT = pathGT.replace("jpg", "png")  
-
-        mask = Image.open(pathGT)
-        mask = target_transform(mask)
-        ood_gts = np.array(mask)
-        print(f"Loaded out-of-distribution ground-truths: {ood_gts}") #debug
-        
-        if "RoadAnomaly" in pathGT:
-            ood_gts = np.where((ood_gts==2), 1, ood_gts) #ho verificato ci sono veramente dei 2 all'interno dell'immagine
-        if "LostAndFound" in pathGT: # LostAndFound qui non entra
-            ood_gts = np.where((ood_gts==0), 255, ood_gts)
-            ood_gts = np.where((ood_gts==1), 0, ood_gts)
-            ood_gts = np.where((ood_gts>1)&(ood_gts<201), 1, ood_gts)
-
-        if "Streethazard" in pathGT: #  qui non entra
-            ood_gts = np.where((ood_gts==14), 255, ood_gts)
-            ood_gts = np.where((ood_gts<20), 0, ood_gts)
-            ood_gts = np.where((ood_gts==255), 1, ood_gts)
-
-        if 1 not in np.unique(ood_gts):
-            continue              
-        else:
-             ood_gts_list.append(ood_gts)
-             anomaly_score_list.append(anomaly_result)
-        del result, anomaly_result, ood_gts, mask
-        torch.cuda.empty_cache()
-
-
-    # Calculate metrics: AUPRC and FPR@TPR95
-    ood_gts = np.array(ood_gts_list) 
-    anomaly_scores = np.array(anomaly_score_list)
-
-    ood_mask = (ood_gts == 1) #array con True dove ood_gts == 1 resto false
-    ind_mask = (ood_gts == 0) #array con True dove ood_gts == 0 resto false
-
-    ood_out = anomaly_scores[ood_mask] # prendo soltanto i punteggi degli ood
-    ind_out = anomaly_scores[ind_mask] # prendo soltanto i punteggi degli ind
-
-    ood_label = np.ones(len(ood_out)) # creo un array di 1 farà da label
-    ind_label = np.zeros(len(ind_out)) # creo un array di 0 farà da label
-    
-    val_out = np.concatenate((ind_out, ood_out)) # array con tutti i punteggi delle classi ind e out
-    val_label = np.concatenate((ind_label, ood_label)) #array con tutte le label delle classi ind e out
-
-    prc_auc = average_precision_score(val_label, val_out)
-    fpr = fpr_at_95_tpr(val_out, val_label)
-
-    print(f'AUPRC score: {prc_auc*100.0}')
-    print(f'FPR@TPR95: {fpr*100.0}')
+    print(f"sum_dataset : {sum_dataset}")
+    print(f"num_images  : {num_images}")
 
  
 
