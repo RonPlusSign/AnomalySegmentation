@@ -221,7 +221,7 @@ def main():
                 #print(f"cov_matrices[c] shape: {cov_matrices[c].shape}")
                 #print("qui")
                 # Accumulare il prodotto centrato
-                cov_matrices[c] += torch.outer(centered, centered.T) 
+                cov_matrices[c] += centered @ centered.T
                 '''block_size = 500  # Ad esempio, suddividi in blocchi di 10.000
                 n = len(centered_flattened)
 
