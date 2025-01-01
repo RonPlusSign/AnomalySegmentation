@@ -180,7 +180,7 @@ def main():
     if mean_is_computed:
         num_classes, height, width = pre_computed_mean.shape
         #cov_matrices = np.zeros((num_classes, height * width, height * width), dtype=np.float32)
-        cov_matrices = torch.zeros((num_classes, 512 * 1024, 512*1024), dtype=torch.float32, device='cuda')  # Matrice di covarianza inizializzata su GPU bho mi sembra impossibile eppure ci sta
+        cov_matrices = torch.zeros((num_classes, 512, 512), dtype=torch.float32, device='cuda')  # Matrice di covarianza inizializzata su GPU bho mi sembra impossibile eppure ci sta
     
     num_images = 0 
     print ("Model and weights LOADED successfully")
@@ -216,13 +216,13 @@ def main():
                 centered =  result[c] - pre_computed_mean[c]  # Forma (H, W)
                 
                 # Appiattire localmente (H x W)
-                centered_flattened = centered.flatten()
-                print(f"centered_flattened shape: {centered_flattened.shape}")
-                print(f"cov_matrices[c] shape: {cov_matrices[c].shape}")
+                #centered_flattened = centered.flatten()
+                #print(f"centered_flattened shape: {centered_flattened.shape}")
+                #print(f"cov_matrices[c] shape: {cov_matrices[c].shape}")
                 #print("qui")
                 # Accumulare il prodotto centrato
-                #cov_matrices[c] += torch.outer(centered_flattened, centered_flattened) 
-                block_size = 500  # Ad esempio, suddividi in blocchi di 10.000
+                cov_matrices[c] += torch.outer(centered, centered.T) 
+                '''block_size = 500  # Ad esempio, suddividi in blocchi di 10.000
                 n = len(centered_flattened)
 
                 for i in range(0, n, block_size):
@@ -234,7 +234,7 @@ def main():
                     # Accumula il blocco nella posizione corretta di cov_matrices
                     #cov_matrices[c, i:i + block_size, i:i + block_size] += block_cov
                     cov_matrices[c, i:i + block_size, i:i + block_size] += torch.outer( centered_flattened[i:i + block_size],  centered_flattened[i:i + block_size])
-                    #del block_cov, block_i
+                    #del block_cov, block_i'''
                 
         num_images +=1
                     
