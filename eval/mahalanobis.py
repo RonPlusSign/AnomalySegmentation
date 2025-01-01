@@ -125,7 +125,7 @@ def main():
     assert os.path.exists(args.datadir), "Error: datadir (dataset directory) could not be loaded"
 
     # Augmentations and Normalizations
-    co_transform = MyCoTransform(False, augment=True, height=512)#1024)
+    co_transform = MyCoTransform(False, augment=False, height=512)#1024)
     co_transform_val = MyCoTransform(False, augment=False, height=512)#1024)
 
     # Dataset and Loader
