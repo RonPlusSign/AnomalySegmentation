@@ -221,8 +221,8 @@ def main():
                 print(f"cov_matrices[c] shape: {cov_matrices[c].shape}")
                 #print("qui")
                 # Accumulare il prodotto centrato
-                #cov_matrices[c] += np.outer(centered_flattened, centered_flattened.T) 
-                block_size = 500  # Ad esempio, suddividi in blocchi di 10.000
+                cov_matrices[c] += torch.outer(centered_flattened, centered_flattened) 
+                '''block_size = 500  # Ad esempio, suddividi in blocchi di 10.000
                 n = len(centered_flattened)
 
                 for i in range(0, n, block_size):
@@ -233,7 +233,7 @@ def main():
 
                     # Accumula il blocco nella posizione corretta di cov_matrices
                     cov_matrices[c, i:i + block_size, i:i + block_size] += block_cov
-                    del block_cov, block_i
+                    del block_cov, block_i'''
                 
         num_images +=1
                     
