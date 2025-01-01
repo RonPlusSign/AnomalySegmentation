@@ -128,6 +128,7 @@ def main():
 
     if mean_is_computed :
         pre_computed_mean = np.load(mean_path)
+        printf(f"pre_computed_mean {pre_computed_mean.shape}")
     # Augmentations and Normalizations
     co_transform = MyCoTransform(False, augment=False, height=512)#1024)
     co_transform_val = MyCoTransform(False, augment=False, height=512)#1024)
