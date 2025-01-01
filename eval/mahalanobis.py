@@ -112,12 +112,12 @@ def main():
     ood_gts_list = []
 
  
-    modelpath = args.loadDir +"/" +args.model + ".py"
+    #modelpath = args.loadDir +"/" +args.model + ".py"
     weightspath = args.loadDir + args.loadWeights
     
 
 
-    print ("Loading model: " + modelpath)
+    print ("Loading model: " + args.model)
     print ("Loading weights: " + weightspath)
     
     
