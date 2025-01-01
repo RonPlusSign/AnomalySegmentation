@@ -200,7 +200,9 @@ def main():
 
     print(f"sum_dataset : {sum_dataset}")
     print(f"num_images  : {num_images}")
-
+    mean = sum_dataset / num_images
+    np.save(f"mean_cityscapes_{args.model}.npy", mean)
+    print(f"Mean output saved as 'mean_cityscapes_{args.model}.npy'")
  
 
 if __name__ == '__main__':
