@@ -215,7 +215,9 @@ def main():
                 
                 # Appiattire localmente (H x W)
                 centered_flattened = centered.flatten()
-                print("qui")
+                print(f"centered_flattened shape: {centered_flattened.shape}")
+                print(f"cov_matrices[c] shape: {cov_matrices[c].shape}")
+                #print("qui")
                 # Accumulare il prodotto centrato
                 cov_matrices[c] += np.outer(centered_flattened, centered_flattened) 
                 
