@@ -22,7 +22,7 @@ import sys
 seed = 42
 
 
-from dataset import VOC12,cityscapes
+from dataset1 import cityscapes
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
 
@@ -128,7 +128,7 @@ def main():
     co_transform_val = MyCoTransform(False, augment=False, height=512)#1024)
 
     # Dataset and Loader
-    dataset_train = cityscapes(args.datadir, None, None, 'train')
+    dataset_train = cityscapes(args.datadir, None, 'train')
     #dataset_train = cityscapes(args.datadir, co_transform, 'train')
     #dataset_val = cityscapes(args.datadir, co_transform_val, 'val') serve solo train
 
