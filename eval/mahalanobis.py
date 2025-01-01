@@ -184,7 +184,7 @@ def main():
     model.eval()
     
     for step, (images, labels) in enumerate(loader):
-        print(f"-----------{step}-----------")
+        print(f"-----------{step/2974 * 100}-----------")
         #images = torch.from_numpy(np.array(Image.open(path).convert('RGB'))).unsqueeze(0).float()
         #images = input_transform((Image.open(path).convert('RGB'))).unsqueeze(0).float()
         if not args.cpu:
