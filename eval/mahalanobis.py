@@ -219,7 +219,7 @@ def main():
                 print(f"cov_matrices[c] shape: {cov_matrices[c].shape}")
                 #print("qui")
                 # Accumulare il prodotto centrato
-                cov_matrices[c] += np.outer(centered_flattened, centered_flattened) 
+                cov_matrices[c] += np.outer(centered_flattened, centered_flattened.T) 
                 
         num_images +=1
                     
