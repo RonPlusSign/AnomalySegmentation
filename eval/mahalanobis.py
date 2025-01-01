@@ -209,10 +209,10 @@ def main():
             
         else : # calcolo la covarianza
             for c in range(num_classes):
-                print("qui")
+                
                 # Centrare rispetto alla media della classe
                 centered = output[c] - pre_computed_mean[c]  # Forma (H, W)
-
+                print("qui")
                 # Appiattire localmente (H x W)
                 centered_flattened = centered.flatten()
 
