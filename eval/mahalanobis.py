@@ -114,7 +114,7 @@ def main():
  
     modelpath = args.loadDir +"/" +args.model + ".py"
     weightspath = args.loadDir + args.loadWeights
-    temperature = float(args.temperature)
+    
 
 
     print ("Loading model: " + modelpath)
