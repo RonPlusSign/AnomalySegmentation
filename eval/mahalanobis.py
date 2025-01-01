@@ -175,8 +175,9 @@ def main():
 
     
     sum_dataset = np.zeros((20, 512, 1024), dtype=np.float32)
-    
-    cov_matrices = np.zeros((num_classes, height * width, height * width), dtype=np.float32)
+    if mean_is_computed:
+        num_classes, height, width = pre_computed_mean.shape
+        cov_matrices = np.zeros((num_classes, height * width, height * width), dtype=np.float32)
 
     num_images = 0 
     print ("Model and weights LOADED successfully")
@@ -206,7 +207,7 @@ def main():
             sum_dataset += output
             
         else : # calcolo la covarianza
-            for cls in range(20):
+            for cls in range(num_classes):
                 # Centrare rispetto alla media della classe
                 centered = output[cls] - pre_computed_mean[cls]  # Forma (H, W)
 
@@ -228,7 +229,7 @@ def main():
     else : 
         # Normalizza ogni matrice di covarianza
         cov_matrices /= num_images
-
+        print(f"cov_matrices : {cov_matrices.shape}")
         # Salva le matrici di covarianza per ogni classe
         np.save(f"{args.loadDir}/save/cov_matrices_{args.model}.npy", cov_matrices)
         print(f"Covariance matrices saved as '{args.loadDir}/save/cov_matrices_{args.model}.npy'")
