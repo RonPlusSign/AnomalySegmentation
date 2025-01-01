@@ -128,7 +128,7 @@ def main():
     co_transform_val = MyCoTransform(False, augment=False, height=512)#1024)
 
     # Dataset and Loader
-    dataset_train = cityscapes(args.datadir, None, 'train')
+    dataset_train = cityscapes(args.datadir, co_transform, 'train')
     #dataset_train = cityscapes(args.datadir, co_transform, 'train')
     #dataset_val = cityscapes(args.datadir, co_transform_val, 'val') serve solo train
 
