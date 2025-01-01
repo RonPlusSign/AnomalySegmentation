@@ -175,13 +175,14 @@ def main():
     model.eval()
     
     for step, (images, labels) in enumerate(loader):
-        print(path)
+        
         #images = torch.from_numpy(np.array(Image.open(path).convert('RGB'))).unsqueeze(0).float()
         #images = input_transform((Image.open(path).convert('RGB'))).unsqueeze(0).float()
         if args.cuda:
                 images = images.cuda()
                 #labels = labels.cuda()
-
+        print(f"images {images.shape}")
+        print(f"labels {labels.shape}")
        
             
         output = None
