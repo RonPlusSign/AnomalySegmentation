@@ -186,8 +186,8 @@ def main():
     print ("Model and weights LOADED successfully")
     model.eval()
     
-    for step, (images, labels) in enumerate(loader):
-        print(f"-----------{step/2974 * 100}-----------")
+    for step, (images, labels) in enumerate(tdqm(loader)):
+        #print(f"-----------{step/2974 * 100}-----------")
         #images = torch.from_numpy(np.array(Image.open(path).convert('RGB'))).unsqueeze(0).float()
         #images = input_transform((Image.open(path).convert('RGB'))).unsqueeze(0).float()
         if not args.cpu:
@@ -250,7 +250,7 @@ def main():
         cov_matrices /= num_images
         print(f"cov_matrices : {cov_matrices.shape}")
         # Salva le matrici di covarianza per ogni classe
-        np.save(f"{args.loadDir}/save/cov_matrices_{args.model}.npy", cov_matrices)
+        np.save(f"{args.loadDir}/save/cov_matrices_{args.model}.npy", cov_matrices.data.cpu().numpy())
         print(f"Covariance matrices saved as '{args.loadDir}/save/cov_matrices_{args.model}.npy'")
         
  
