@@ -212,7 +212,7 @@ def main():
             for c in range(num_classes):
                 
                 # Centrare rispetto alla media della classe
-                centered =  result.data.cpu()[c] - pre_computed_mean[c]  # Forma (H, W)
+                centered =  result[c] - pre_computed_mean[c]  # Forma (H, W)
                 
                 # Appiattire localmente (H x W)
                 centered_flattened = centered.flatten()
