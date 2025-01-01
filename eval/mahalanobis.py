@@ -106,7 +106,7 @@ def main():
     parser.add_argument('--num-workers', type=int, default=4)
     parser.add_argument('--batch-size', type=int, default=1)
     parser.add_argument('--cpu', action='store_true')
-    parser.add_argument('--mean', default = '/save/mean_cityscapes_erfnet.npy')
+    parser.add_argument('--mean', default = '') #/save/mean_cityscapes_erfnet.npy
 
 
     args = parser.parse_args()
