@@ -186,7 +186,7 @@ def main():
     print ("Model and weights LOADED successfully")
     model.eval()
     
-    for step, (images, labels) in enumerate(tdqm(loader)):
+    for step, (images, labels) in enumerate(tqdm(loader)):
         #print(f"-----------{step/2974 * 100}-----------")
         #images = torch.from_numpy(np.array(Image.open(path).convert('RGB'))).unsqueeze(0).float()
         #images = input_transform((Image.open(path).convert('RGB'))).unsqueeze(0).float()
