@@ -230,7 +230,7 @@ def main():
                     block_cov = np.outer(block_i, block_i)
 
                     # Accumula il blocco nella posizione corretta di cov_matrices
-                    cov_matrices[i:i + block_size, i:i + block_size] += block_cov
+                    cov_matrices[c, i:i + block_size, i:i + block_size] += block_cov
                 
         num_images +=1
                     
