@@ -222,18 +222,19 @@ def main():
                 #print("qui")
                 # Accumulare il prodotto centrato
                 cov_matrices[c] += torch.outer(centered_flattened, centered_flattened) 
-                '''block_size = 500  # Ad esempio, suddividi in blocchi di 10.000
+                block_size = 500  # Ad esempio, suddividi in blocchi di 10.000
                 n = len(centered_flattened)
 
                 for i in range(0, n, block_size):
-                    block_i = centered_flattened[i:i + block_size]
+                    #block_i = centered_flattened[i:i + block_size]
 
                     # Calcola il prodotto esterno tra il blocco centrato e se stesso
-                    block_cov = torch.outer(block_i, block_i)
+                    #block_cov = torch.outer(block_i, block_i)
 
                     # Accumula il blocco nella posizione corretta di cov_matrices
-                    cov_matrices[c, i:i + block_size, i:i + block_size] += block_cov
-                    del block_cov, block_i'''
+                    #cov_matrices[c, i:i + block_size, i:i + block_size] += block_cov
+                    cov_matrices[c, i:i + block_size, i:i + block_size] += torch.outer( centered_flattened[i:i + block_size],  centered_flattened[i:i + block_size])
+                    #del block_cov, block_i
                 
         num_images +=1
                     
