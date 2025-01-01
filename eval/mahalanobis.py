@@ -212,10 +212,10 @@ def main():
                 
                 # Centrare rispetto alla media della classe
                 centered = output[c] - pre_computed_mean[c]  # Forma (H, W)
-                print("qui")
+                
                 # Appiattire localmente (H x W)
                 centered_flattened = centered.flatten()
-
+                print("qui")
                 # Accumulare il prodotto centrato
                 cov_matrices[c] += np.outer(centered_flattened, centered_flattened) 
                 
