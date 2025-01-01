@@ -178,8 +178,9 @@ def main():
     sum_dataset = np.zeros((20, 512, 1024), dtype=np.float32)
     if mean_is_computed:
         num_classes, height, width = pre_computed_mean.shape
-        cov_matrices = np.zeros((num_classes, height * width, height * width), dtype=np.float32)
-
+        #cov_matrices = np.zeros((num_classes, height * width, height * width), dtype=np.float32)
+        cov_matrices = torch.zeros((num_classes, 512, 1024), dtype=torch.float32, device='cuda')  # Matrice di covarianza inizializzata su GPU
+    
     num_images = 0 
     print ("Model and weights LOADED successfully")
     model.eval()
@@ -211,7 +212,7 @@ def main():
             for c in range(num_classes):
                 
                 # Centrare rispetto alla media della classe
-                centered = output[c] - pre_computed_mean[c]  # Forma (H, W)
+                centered =  result.data.cpu()[c] - pre_computed_mean[c]  # Forma (H, W)
                 
                 # Appiattire localmente (H x W)
                 centered_flattened = centered.flatten()
