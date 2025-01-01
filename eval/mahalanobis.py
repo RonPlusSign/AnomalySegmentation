@@ -180,7 +180,7 @@ def main():
     if mean_is_computed:
         num_classes, height, width = pre_computed_mean.shape
         #cov_matrices = np.zeros((num_classes, height * width, height * width), dtype=np.float32)
-        cov_matrices = torch.zeros((num_classes, 512, 1024), dtype=torch.float32, device='cuda')  # Matrice di covarianza inizializzata su GPU
+        cov_matrices = torch.zeros((num_classes, 512 * 1024, 512*1024), dtype=torch.float32, device='cuda')  # Matrice di covarianza inizializzata su GPU bho mi sembra impossibile eppure ci sta
     
     num_images = 0 
     print ("Model and weights LOADED successfully")
