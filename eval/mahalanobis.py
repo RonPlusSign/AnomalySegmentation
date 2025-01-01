@@ -111,14 +111,12 @@ def main():
     anomaly_score_list = []
     ood_gts_list = []
 
-    method = args.method
+ 
     modelpath = args.loadDir +"/" +args.model + ".py"
     weightspath = args.loadDir + args.loadWeights
     temperature = float(args.temperature)
 
-    if not os.path.exists(f'results-{method}.txt'):
-        open(f'results-{method}.txt', 'w').close()
-    file = open(f'results-{method}.txt', 'a')
+
     print ("Loading model: " + modelpath)
     print ("Loading weights: " + weightspath)
     
@@ -230,7 +228,6 @@ def main():
         del result, anomaly_result, ood_gts, mask
         torch.cuda.empty_cache()
 
-    file.write( "\n")
 
     # Calculate metrics: AUPRC and FPR@TPR95
     ood_gts = np.array(ood_gts_list) 
@@ -254,8 +251,7 @@ def main():
     print(f'AUPRC score: {prc_auc*100.0}')
     print(f'FPR@TPR95: {fpr*100.0}')
 
-    file.write(('    AUPRC score:' + str(prc_auc*100.0) + '   FPR@TPR95:' + str(fpr*100.0) ))
-    file.close()
+ 
 
 if __name__ == '__main__':
     main()
