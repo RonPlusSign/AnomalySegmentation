@@ -16,6 +16,7 @@ from icecream import ic
 from temperature_scaling import ModelWithTemperature
 import torch.nn.functional as F # aggiunto io 
 from torchvision.transforms import Compose, ToTensor, Normalize, Resize
+from transform import Relabel, ToLabel, Colorize
 from enet import ENet
 from bisenet import BiSeNetV1
 import sys
