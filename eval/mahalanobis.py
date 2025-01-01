@@ -128,7 +128,7 @@ def main():
 
     if mean_is_computed :
         pre_computed_mean = np.load(mean_path)
-        pre_computed_mean = torch.from_numpy(pre_computed_mean)
+        pre_computed_mean = torch.from_numpy(pre_computed_mean).cuda()
         print(f"pre_computed_mean {pre_computed_mean.shape}")
     # Augmentations and Normalizations
     co_transform = MyCoTransform(False, augment=False, height=512)#1024)
