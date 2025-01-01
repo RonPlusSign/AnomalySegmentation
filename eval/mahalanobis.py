@@ -208,15 +208,15 @@ def main():
             sum_dataset += output
             
         else : # calcolo la covarianza
-            for cls in range(num_classes):
+            for c in range(num_classes):
                 # Centrare rispetto alla media della classe
-                centered = output[cls] - pre_computed_mean[cls]  # Forma (H, W)
+                centered = output[c] - pre_computed_mean[c]  # Forma (H, W)
 
                 # Appiattire localmente (H x W)
                 centered_flattened = centered.flatten()
 
                 # Accumulare il prodotto centrato
-                cov_matrices[cls] += np.outer(centered_flattened, centered_flattened) 
+                cov_matrices[c] += np.outer(centered_flattened, centered_flattened) 
                 
         num_images +=1
                     
