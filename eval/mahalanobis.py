@@ -178,7 +178,7 @@ def main():
         
         #images = torch.from_numpy(np.array(Image.open(path).convert('RGB'))).unsqueeze(0).float()
         #images = input_transform((Image.open(path).convert('RGB'))).unsqueeze(0).float()
-        if args.cuda:
+        if not args.cpu:
                 images = images.cuda()
                 #labels = labels.cuda()
         print(f"images {images.shape}")
