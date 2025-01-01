@@ -26,7 +26,7 @@ seed = 42
 from dataset1 import cityscapes
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
-
+from tqdm import tqdm
 #Augmentations - different function implemented to perform random augments on both image and target
 class MyCoTransform(object):
     def __init__(self, enc, augment=True, height=512):
@@ -183,7 +183,7 @@ def main():
     print ("Model and weights LOADED successfully")
     model.eval()
     
-    for step, (images, labels) in enumerate(loader):
+    for step, (images, labels) in enumerate(tqdm(loader, desc = "Processing Data")):
         print(f"-----------{step/2974 * 100}-----------")
         #images = torch.from_numpy(np.array(Image.open(path).convert('RGB'))).unsqueeze(0).float()
         #images = input_transform((Image.open(path).convert('RGB'))).unsqueeze(0).float()
