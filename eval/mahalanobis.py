@@ -136,11 +136,13 @@ def main():
     
     # Track sum and count for mean
     sum_dataset = np.zeros((20, 512, 1024), dtype=np.float32)
-    image_count_per_class = np.zeros(NUM_CLASSES)
+    pixel_count_per_class = np.zeros(NUM_CLASSES)
 
     # Covariance matrices
     cov_matrix = torch.zeros((512, 512), dtype=torch.float32, device='cuda')
     num_images = 0
+
+    # TODO softmax
 
     for step, (images, labels) in enumerate(tqdm(loader)):
         if not args.cpu:
@@ -165,22 +167,23 @@ def main():
                 
                 # Count how many pixels of this class are present in the labels
                 # Count where the label equals the current class 'c'
-                image_count_per_class[c] += np.sum(labels.cpu().numpy() == c).item()
+                pixel_count_per_class[c] += np.sum(labels.cpu().numpy() == c).item()
         else:
-            for c in range(NUM_CLASSES):  
+            for c in range(NUM_CLASSES):
                 # Center the output relative to the precomputed mean
-                centered = result[c] - pre_computed_mean[c] 
+                centered = result[c] - pre_computed_mean[c]
                 cov_matrix += centered @ centered.T
-        num_images += 1
+        num_images += images.size(0)
 
     # After processing all images, calculate the mean per class
     if not mean_is_computed:
         mean = np.zeros_like(sum_dataset)
         
         for c in range(NUM_CLASSES):
-            if image_count_per_class[c] > 0:
+            if pixel_count_per_class[c] > 0:
                 # Divide the sum for class 'c' by the count of pixels for class 'c'
-                mean[c] = sum_dataset[c] / image_count_per_class[c]
+                #mean[c] = sum_dataset[c] / pixel_count_per_class[c]
+                mean[c] = sum_dataset[c] / num_images
         
         print(f"Mean per class: {mean.shape}")
         np.save(f"{args.loadDir}/save/mean_cityscapes_{args.model}.npy", mean)
