@@ -269,10 +269,7 @@ def train(args, model, enc=False):
         for step, (images, labels) in enumerate(loader):
 
             start_time = time.time()
-            #print (labels.size())
-            #print (np.unique(labels.numpy()))
-            #print("labels: ", np.unique(labels[0].numpy()))
-            #labels = torch.ones(4, 1, 512, 1024).long()
+        
             if args.cuda:
                 images = images.cuda()
                 labels = labels.cuda()
@@ -282,21 +279,20 @@ def train(args, model, enc=False):
             
             if args.model == "erfnet":
                 outputs = model(inputs, only_encode=enc) 
-            elif args.model == "bisenet":
-                outputs = model(inputs)[0]
             else:
                 outputs = model(inputs)
 
-            #print("targets", np.unique(targets[:, 0].cpu().data.numpy()))
-
             optimizer.zero_grad()
-            
-            #print("Unique outputs:", outputs.shape)
-            #print("Unique targets:", targets.shape)
-            #print(targets[:, 0].shape)
-            loss = criterion(outputs, targets[:, 0])
-            #loss = criterion(outputs, targets) 
-            #loss.requires_grad = True
+
+            if args.model == "bisenet":
+                # combine the principal loss with the auxiliary losses
+                loss_1 = criterion(outputs[0], targets[:, 0])
+                loss_2 = criterion(outputs[1], targets[:, 0])
+                loss_3 = criterion(outputs[2], targets[:, 0])
+                loss = (loss_1 + loss_2 + loss_3) / 3
+            else:
+                loss = criterion(outputs, targets[:, 0])
+
             loss.backward()
             optimizer.step()
 
@@ -304,18 +300,12 @@ def train(args, model, enc=False):
             time_train.append(time.time() - start_time)
 
             if (doIouTrain):
-                #start_time_iou = time.time()
                 iouEvalTrain.addBatch(outputs.max(1)[1].unsqueeze(1).data, targets.data)
-                #print ("Time to add confusion matrix: ", time.time() - start_time_iou)      
-
-            #print(outputs.size())
+                
             if args.visualize and args.steps_plot > 0 and step % args.steps_plot == 0:
                 start_time_plot = time.time()
                 image = inputs[0].cpu().data
-                #image[0] = image[0] * .229 + .485
-                #image[1] = image[1] * .224 + .456
-                #image[2] = image[2] * .225 + .406
-                #print("output", np.unique(outputs[0].cpu().max(0)[1].data.numpy()))
+        
                 board.image(image, f'input (epoch: {epoch}, step: {step})')
                 if isinstance(outputs, list):   #merge gpu tensors
                     board.image(color_transform(outputs[0][0].cpu().max(0)[1].data.unsqueeze(0)),
