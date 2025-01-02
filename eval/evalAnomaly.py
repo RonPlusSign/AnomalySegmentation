@@ -174,8 +174,8 @@ def main():
                 anomaly_result = anomaly_result.data.cpu().numpy()
             elif(method == "Mahalanobis"):
                 # Load mean and covariance matrices from "save" folder
-                means = np.load("../save/mean_cityscapes_erfnet.npy")
-                cov = np.load("../save/cov_matrix_erfnet.npy")
+                means = np.load("/content/AnomalySegmentation/save/mean_cityscapes_erfnet.npy")
+                cov = np.load("/content/AnomalySegmentation/save/cov_matrix_erfnet.npy")
                 # Compute Mahalanobis distance
                 anomaly_result = mahalanobis_score(result.data.cpu().numpy(), means, cov)
             else:
