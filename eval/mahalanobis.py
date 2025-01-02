@@ -186,7 +186,7 @@ def main():
         np.save(f"{args.loadDir}/save/mean_cityscapes_{args.model}.npy", mean)
         print(f"Mean output saved as '{args.loadDir}/save/mean_cityscapes_{args.model}.npy'")
     else: 
-        cov_matrice /= (512 * 1024 * num_images) # Normalize by the number of pixels
+        cov_matrix /= (512 * 1024 * num_images) # Normalize by the number of pixels
         print(f"Covariance matrix: {cov_matrix.shape}")
         np.save(f"{args.loadDir}/save/cov_matrix_{args.model}.npy", cov_matrix.data.cpu().numpy())
         print(f"Covariance matrice saved as '{args.loadDir}/save/cov_matrix_{args.model}.npy'")
