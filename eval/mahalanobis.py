@@ -139,7 +139,7 @@ def main():
     image_count_per_class = np.zeros(NUM_CLASSES)
 
     # Covariance matrices
-    cov_matrice = torch.zeros((512, 512), dtype=torch.float32, device='cuda')
+    cov_matrix = torch.zeros((512, 512), dtype=torch.float32, device='cuda')
     num_images = 0
 
     for step, (images, labels) in enumerate(tqdm(loader)):
@@ -170,7 +170,7 @@ def main():
             for c in range(NUM_CLASSES):  
                 # Center the output relative to the precomputed mean
                 centered = result[c] - pre_computed_mean[c] 
-                cov_matrice += centered @ centered.T
+                cov_matrix += centered @ centered.T
         num_images += 1
 
     # After processing all images, calculate the mean per class
@@ -187,9 +187,9 @@ def main():
         print(f"Mean output saved as '{args.loadDir}/save/mean_cityscapes_{args.model}.npy'")
     else: 
         cov_matrice /= (512 * 1024 * num_images) # Normalize by the number of pixels
-        print(f"Covariance matrix: {cov_matrice.shape}")
-        np.save(f"{args.loadDir}/save/cov_matrice_{args.model}.npy", cov_matrice.data.cpu().numpy())
-        print(f"Covariance matrice saved as '{args.loadDir}/save/cov_matrice_{args.model}.npy'")
+        print(f"Covariance matrix: {cov_matrix.shape}")
+        np.save(f"{args.loadDir}/save/cov_matrix_{args.model}.npy", cov_matrix.data.cpu().numpy())
+        print(f"Covariance matrice saved as '{args.loadDir}/save/cov_matrix_{args.model}.npy'")
  
 
 if __name__ == '__main__':
