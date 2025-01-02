@@ -50,25 +50,25 @@ torch.backends.cudnn.benchmark = True
 def mahalanobis_distance(f_x, mean, covariance_inv):
     """
     Compute the Mahalanobis distance between a sample f_x and a class mean with the inverse covariance matrix.
-    f_x: test sample feature vector (numpy array of shape [d])
-    mean: class mean (numpy array of shape [d])
-    covariance_inv: inverse of covariance matrix (numpy array of shape [d, d])
+    f_x: test sample feature vector (numpy array of shape (20, 512, 1024))
+    mean: class mean (single value)
+    covariance_inv: inverse of covariance matrix (numpy array of shape (20, 20))
     
     Returns the Mahalanobis distance (scalar)
     """
     print(f"mean shape: {mean.shape}")
     print(f"covariance_inv shape: {covariance_inv.shape}")
     print(f"f_x shape: {f_x.shape}")
-    diff = f_x - mean
-    return diff.T @ (covariance_inv @ diff)
+    diff = f_x.reshape(20, -1) - mean # Reshape to (20, 512*1024) because covariance is 20x20
+    return diff.T @ (covariance_inv @ diff) # FIXME: This allocates too much memory and doesn't work
 
 def mahalanobis_score(f_x, means, covariance_inv):
     """
     Compute the Mahalanobis distance-based confidence score for a test sample.
     
-    f_x: test sample feature vector (numpy array of shape [d])
-    means: class means (numpy array of shape [C, d])
-    covariance_inv: inverse of covariance matrix (numpy array of shape [d, d])
+    f_x: test sample feature vector (numpy array of shape (20, 512, 1024))
+    means: class means (numpy array of shape (20))
+    covariance_inv: inverse of covariance matrix (numpy array of shape (20, 20))
     
     Returns the confidence score (scalar)
     """
