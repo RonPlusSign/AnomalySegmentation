@@ -47,12 +47,35 @@ NUM_CLASSES = 20
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = True
 
-def mahalanobis(x, mean, cov):
-    x = x - mean
-    inv_covmat = np.linalg.inv(cov)
-    left_term = np.dot(x, inv_covmat)
-    mahal = np.dot(left_term, x.T)
-    return mahal.diagonal()
+def mahalanobis_distance(x, mean, covariance_inv):
+    """
+    Compute the Mahalanobis distance between a sample x and a class mean with the inverse covariance matrix.
+    x: sample
+    mean: class mean
+    covariance_inv:
+    
+    Returns the Mahalanobis distance (scalar)
+    """
+    diff = x - mean
+    return np.dot(diff.T, np.dot(covariance_inv, diff))
+
+def mahalanobis_score(f_x, means, con_inv):
+    """
+    Compute the Mahalanobis distance-based confidence score for a test sample.
+    
+    f_x: test sample feature vector (numpy array of shape [d])
+    means: class means (numpy array of shape [C, d])
+    con_inv: inverse of the covariance matrix (numpy array of shape [d, d])
+    
+    Returns the confidence score (scalar)
+    """
+    max_distance = float('-inf')  # Start with a very small number
+    for c in range(means.shape[0]):  # Loop over each class
+        distance = mahalanobis_distance(f_x, means[c], con_inv)
+        score = -distance
+        if score > max_distance:
+            max_distance = score
+    return max_distance
 
 def main():
     parser = ArgumentParser()
@@ -151,11 +174,12 @@ def main():
                 anomaly_result = anomaly_result.data.cpu().numpy()
             elif(method == "Mahalanobis"):
                 # Load mean and covariance matrices from "save" folder
-                mean = np.load("../save/mean_cityscapes_erfnet.npy")
+                means = np.load("../save/mean_cityscapes_erfnet.npy")
                 cov = np.load("../save/cov_matrices_erfnet.npy")
                 # Compute Mahalanobis distance
-                anomaly_result = calc_metrics(result, mean, cov)
-
+                anomaly_result = mahalanobis_score(result.data.cpu().numpy(), means, cov)
+            else:
+                raise ValueError("Invalid method")
 
         # Load ground truth mask
         pathGT = path.replace("images", "labels_masks")                
