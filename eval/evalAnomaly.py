@@ -56,6 +56,9 @@ def mahalanobis_distance(f_x, mean, covariance_inv):
     
     Returns the Mahalanobis distance (scalar)
     """
+    print(f"mean shape: {mean.shape}")
+    print(f"covariance_inv shape: {covariance_inv.shape}")
+    print(f"f_x shape: {f_x.shape}")
     diff = f_x - mean
     return diff.T @ (covariance_inv @ diff)
 
@@ -72,6 +75,7 @@ def mahalanobis_score(f_x, means, covariance_inv):
     max_distance = float('-inf')  # Start with a very small number
     for c in range(means.shape[0]):  # Loop over each class
         distance = mahalanobis_distance(f_x, means[c], covariance_inv)
+        print(f"Distance for class {c}: {distance}") 
         score = -distance
         if score > max_distance:
             max_distance = score
@@ -158,8 +162,6 @@ def main():
                 
     
     for path in glob.glob(os.path.expanduser(str(args.input))):
-        print(path)
-        #images = torch.from_numpy(np.array(Image.open(path).convert('RGB'))).unsqueeze(0).float()
         images = input_transform((Image.open(path).convert('RGB'))).unsqueeze(0).float().to(device)
         
         with torch.no_grad():
@@ -172,17 +174,17 @@ def main():
             anomaly_result = F.softmax(result, dim=0)[-1]
             anomaly_result = anomaly_result.data.cpu().numpy()
         else:
-            result = result[:-1] # remove the last channel (void)
+            result_no_void = result[:-1] # remove the last channel (void)
             
             if(method == "MaxLogit"):
-                anomaly_result = -torch.max(result, dim=0)[0]
+                anomaly_result = -torch.max(result_no_void, dim=0)[0]
                 anomaly_result = anomaly_result.data.cpu().numpy()
             elif(method == "MaxEntropy"):
-                probs = F.softmax(result, dim=0)
+                probs = F.softmax(result_no_void, dim=0)
                 entropy = torch.div(torch.sum(-probs * torch.log(probs), dim=0), torch.log(torch.tensor(probs.shape[0])))
                 anomaly_result = entropy.data.cpu().numpy().astype("float32")
             elif(method == "MSP"):
-                anomaly_result = 1.0 - torch.max(F.softmax(result, dim=0), dim=0)[0]
+                anomaly_result = 1.0 - torch.max(F.softmax(result_no_void, dim=0), dim=0)[0]
                 anomaly_result = anomaly_result.data.cpu().numpy()
             elif(method == "Mahalanobis"):
                 # Compute Mahalanobis distance
