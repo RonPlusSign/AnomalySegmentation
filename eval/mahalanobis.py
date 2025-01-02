@@ -139,8 +139,7 @@ def main():
     image_count_per_class = np.zeros(NUM_CLASSES)
 
     # Covariance matrices
-    num_classes, height, width = pre_computed_mean.shape
-    cov_matrices = torch.zeros((num_classes, 512, 512), dtype=torch.float32, device='cuda')
+    cov_matrices = torch.zeros((NUM_CLASSES, 512, 512), dtype=torch.float32, device='cuda')
     num_images = 0
 
     for step, (images, labels) in enumerate(tqdm(loader)):
@@ -167,11 +166,26 @@ def main():
                 # Count how many pixels of this class are present in the labels
                 # Count where the label equals the current class 'c'
                 image_count_per_class[c] += np.sum(labels == c).item()
-
         else:
-            for c in range(num_classes):  
+            (D, L) = load("trainData.txt")
+            plot_hist(D, L)
+            plot_scatter(D, L)
+
+
+            # mean(1) calcola la media dei valori nelle righe, quindi il risultato è un vettore di 6 elementi
+            mu = D.mean(1).reshape(D.shape[0], 1)
+            print('Mean:')
+            print(mu)
+            print()
+
+            # center the data
+            DC = D - mu
+
+            # Covariance matrix
+            C = (DC @ DC.T) / float(D.shape[1])
+            for c in range(NUM_CLASSES):  
                 # Center the output relative to the precomputed mean
-                centered = result[c] - pre_computed_mean[c]  # Shape (H, W)
+                centered = result[c] - pre_computed_mean[c] 
                 cov_matrices[c] += centered @ centered.T
         num_images += 1
 
