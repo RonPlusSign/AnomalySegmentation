@@ -47,6 +47,13 @@ NUM_CLASSES = 20
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = True
 
+def mahalanobis(x, mean, cov):
+    x = x - mean
+    inv_covmat = np.linalg.inv(cov)
+    left_term = np.dot(x, inv_covmat)
+    mahal = np.dot(left_term, x.T)
+    return mahal.diagonal()
+
 def main():
     parser = ArgumentParser()
     parser.add_argument(
@@ -62,7 +69,7 @@ def main():
     parser.add_argument('--num-workers', type=int, default=4)
     parser.add_argument('--batch-size', type=int, default=1)
     parser.add_argument('--cpu', action='store_true')
-    parser.add_argument('--method',default="MSP") #can be MSP or MaxLogit or MaxEntropy
+    parser.add_argument('--method',default="MSP") #can be MSP or MaxLogit or MaxEntropy or Mahalanobis
     parser.add_argument('--void', action='store_true')
     
     parser.add_argument('--temperature', default=0) # add the path of the model absolute path
@@ -139,9 +146,16 @@ def main():
                 probs = F.softmax(result, dim=0)
                 entropy = torch.div(torch.sum(-probs * torch.log(probs), dim=0), torch.log(torch.tensor(probs.shape[0])))
                 anomaly_result = entropy.data.cpu().numpy().astype("float32")
-            else :# MSP
+            elif(method == "MSP"):
                 anomaly_result = 1.0 - torch.max(F.softmax(result, dim=0), dim=0)[0]
                 anomaly_result = anomaly_result.data.cpu().numpy()
+            elif(method == "Mahalanobis"):
+                # Load mean and covariance matrices from "save" folder
+                mean = np.load("../save/mean_cityscapes_erfnet.npy")
+                cov = np.load("../save/cov_matrices_erfnet.npy")
+                # Compute Mahalanobis distance
+                anomaly_result = calc_metrics(result, mean, cov)
+
 
         # Load ground truth mask
         pathGT = path.replace("images", "labels_masks")                

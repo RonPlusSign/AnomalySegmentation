@@ -189,9 +189,9 @@ def main():
         print(f"Mean output saved as '{args.loadDir}/save/mean_cityscapes_{args.model}.npy'")
     else: 
         cov_matrices /= (512 * 1024 * num_images) # Normalize by the number of pixels
-        print(f"Covariance matrix per class: {cov_matrices.shape}")
-        np.save(f"{args.loadDir}/save/cov_matrices_{args.model}.npy", cov_matrices.data.cpu().numpy())
-        print(f"Covariance matrices saved as '{args.loadDir}/save/cov_matrices_{args.model}.npy'")
+        print(f"Covariance matrix: {cov_matrices.shape}")
+        np.save(f"{args.loadDir}/save/cov_matrice_{args.model}.npy", cov_matrices.data.cpu().numpy())
+        print(f"Covariance matrice saved as '{args.loadDir}/save/cov_matrice_{args.model}.npy'")
  
 
 if __name__ == '__main__':
