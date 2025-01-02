@@ -15,52 +15,14 @@ from bisenet import BiSeNetV1
 from dataset1 import cityscapes
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+from main import MyCoTransform, NUM_CHANNELS, NUM_CLASSES
 
-seed = 42
-
-#Augmentations - different function implemented to perform random augments on both image and target
-class MyCoTransform(object):
-    def __init__(self, enc, augment=True, height=512):
-        self.enc=enc
-        self.augment = augment
-        self.height = height
-        pass
-    def __call__(self, input, target):
-        # do something to both images
-        input =  Resize(self.height, Image.BILINEAR)(input)
-        target = Resize(self.height, Image.NEAREST)(target)
-
-        if(self.augment):
-            # Random hflip
-            hflip = random.random()
-            if (hflip < 0.5):
-                input = input.transpose(Image.FLIP_LEFT_RIGHT)
-                target = target.transpose(Image.FLIP_LEFT_RIGHT)
-            
-            #Random translation 0-2 pixels (fill rest with padding
-            transX = random.randint(-2, 2) 
-            transY = random.randint(-2, 2)
-
-            input = ImageOps.expand(input, border=(transX,transY,0,0), fill=0)
-            target = ImageOps.expand(target, border=(transX,transY,0,0), fill=255) #pad label filling with 255
-            input = input.crop((0, 0, input.size[0]-transX, input.size[1]-transY))
-            target = target.crop((0, 0, target.size[0]-transX, target.size[1]-transY))   
-
-        input = ToTensor()(input)
-        if (self.enc):
-            target = Resize(int(self.height/8), Image.NEAREST)(target)
-        target = ToLabel()(target)
-        target = Relabel(255, 19)(target)
-
-        return input, target
 
 # general reproducibility
+seed = 42
 random.seed(seed)
 np.random.seed(seed)
 torch.manual_seed(seed)
-
-NUM_CHANNELS = 3
-NUM_CLASSES = 20
 
 # gpu training specific
 torch.backends.cudnn.deterministic = True
@@ -93,7 +55,7 @@ def main():
     
     assert os.path.exists(args.datadir), "Error: datadir (dataset directory) could not be loaded"
 
-    if mean_is_computed :
+    if mean_is_computed:
         pre_computed_mean = np.load(mean_path)
         pre_computed_mean = torch.from_numpy(pre_computed_mean).cuda()
         print(f"pre_computed_mean {pre_computed_mean.shape}")
@@ -135,11 +97,11 @@ def main():
     model.eval()
     
     # Track sum and count for mean
-    sum_dataset = np.zeros((20, 512, 1024), dtype=np.float32)
-    pixel_count_per_class = np.zeros(NUM_CLASSES)
+    sum_dataset = np.zeros((20,), dtype=np.float32)  # a value for each class
+    # pixel_count_per_class = np.zeros(NUM_CLASSES)
 
     # Covariance matrices
-    cov_matrix = torch.zeros((512, 512), dtype=torch.float32, device='cuda')
+    cov_matrix = torch.zeros((20, 20), dtype=torch.float32, device='cuda')
     num_images = 0
 
     for step, (images, labels) in enumerate(tqdm(loader)):
@@ -159,29 +121,32 @@ def main():
         # If mean is not computed, accumulate sum and count per class
         if not mean_is_computed:
             # Accumulate sum for each class
-            for c in range(NUM_CLASSES):
+            print(f"Output shape: {output.shape}")
+            sum_dataset += np.sum(output, axis=(1, 2))
+            
+            # for c in range(NUM_CLASSES):
                 # Add the output for class 'c' to the sum
-                sum_dataset[c] += output[c]
+                # sum_dataset[c] += output[c]
                 
                 # Count how many pixels of this class are present in the labels
                 # Count where the label equals the current class 'c'
-                pixel_count_per_class[c] += np.sum(labels.cpu().numpy() == c).item()
+                # pixel_count_per_class[c] += np.sum(labels.cpu().numpy() == c).item()
         else:
             for c in range(NUM_CLASSES):
                 # Center the output relative to the precomputed mean
                 centered = result[c] - pre_computed_mean[c]
-                cov_matrix += centered @ centered.T
+                cov_matrix += centered.T @ centered
         num_images += images.size(0)
 
     # After processing all images, calculate the mean per class
     if not mean_is_computed:
-        mean = np.zeros_like(sum_dataset)
+        mean = sum_dataset / (num_images * 512 * 1024) # Normalize by the number of pixels
         
-        for c in range(NUM_CLASSES):
-            if pixel_count_per_class[c] > 0:
-                # Divide the sum for class 'c' by the count of pixels for class 'c'
-                #mean[c] = sum_dataset[c] / pixel_count_per_class[c]
-                mean[c] = sum_dataset[c] / num_images
+        # for c in range(NUM_CLASSES):
+            # if pixel_count_per_class[c] > 0:
+            #     # Divide the sum for class 'c' by the count of pixels for class 'c'
+            #     #mean[c] = sum_dataset[c] / pixel_count_per_class[c]
+            #     mean[c] = sum_dataset[c] / num_images
         
         print(f"Mean per class: {mean.shape}")
         np.save(f"{args.loadDir}/save/mean_cityscapes_{args.model}.npy", mean)
