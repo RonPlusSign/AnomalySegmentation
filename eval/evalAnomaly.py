@@ -51,28 +51,27 @@ def mahalanobis_distance(f_x, mean, covariance_inv):
     """
     Compute the Mahalanobis distance between a sample f_x and a class mean with the inverse covariance matrix.
     f_x: test sample feature vector (numpy array of shape [d])
-    mean: class mean
-    covariance_inv:
+    mean: class mean (numpy array of shape [d])
+    covariance_inv: inverse of covariance matrix (numpy array of shape [d, d])
     
     Returns the Mahalanobis distance (scalar)
     """
     diff = f_x - mean
     return diff.T @ (covariance_inv @ diff)
 
-def mahalanobis_score(f_x, means, cov):
+def mahalanobis_score(f_x, means, covariance_inv):
     """
     Compute the Mahalanobis distance-based confidence score for a test sample.
     
     f_x: test sample feature vector (numpy array of shape [d])
     means: class means (numpy array of shape [C, d])
-    cov: covariance matrix (numpy array of shape [d, d])
+    covariance_inv: inverse of covariance matrix (numpy array of shape [d, d])
     
     Returns the confidence score (scalar)
     """
     max_distance = float('-inf')  # Start with a very small number
-    cov_inv = np.linalg.inv(cov)
     for c in range(means.shape[0]):  # Loop over each class
-        distance = mahalanobis_distance(f_x, means[c], cov_inv)
+        distance = mahalanobis_distance(f_x, means[c], covariance_inv)
         score = -distance
         if score > max_distance:
             max_distance = score
@@ -148,6 +147,7 @@ def main():
         # Load mean and covariance matrices from "save" folder
         means = np.load("/content/AnomalySegmentation/save/mean_cityscapes_erfnet.npy")
         cov = np.load("/content/AnomalySegmentation/save/cov_matrix_erfnet.npy")
+        cov_inv = np.linalg.inv(cov)
         print("mean shape: ", means.shape)
         print("cov shape: ", cov.shape)
                 
@@ -181,7 +181,7 @@ def main():
                 anomaly_result = anomaly_result.data.cpu().numpy()
             elif(method == "Mahalanobis"):
                 # Compute Mahalanobis distance
-                anomaly_result = mahalanobis_score(F.softmax(result, dim=0), means, cov)
+                anomaly_result = mahalanobis_score(F.softmax(result, dim=0), means, cov_inv)
                 anomaly_result = anomaly_result.data.cpu().numpy()
                 print(f"Mahalanobis score: {anomaly_result}")
             else:
