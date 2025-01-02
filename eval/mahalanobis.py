@@ -142,8 +142,6 @@ def main():
     cov_matrix = torch.zeros((512, 512), dtype=torch.float32, device='cuda')
     num_images = 0
 
-    # TODO softmax
-
     for step, (images, labels) in enumerate(tqdm(loader)):
         if not args.cpu:
             images = images.cuda()
@@ -152,10 +150,10 @@ def main():
         output = None
         with torch.no_grad():
             if args.model == "bisenet":
-                result = model(images)[0].squeeze(0)
+                result = F.softmax(model(images)[0].squeeze(0))
                 output = result.data.cpu().numpy()
             else: #TODO check ENet output
-                result = model(images).squeeze(0)
+                result = F.softmax(model(images).squeeze(0))
                 output = result.data.cpu().numpy()
 
         # If mean is not computed, accumulate sum and count per class
