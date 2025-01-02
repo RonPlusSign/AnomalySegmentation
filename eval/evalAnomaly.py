@@ -100,6 +100,7 @@ def main():
     anomaly_score_list = []
     ood_gts_list = []
 
+    device = torch.device("cuda" if torch.cuda.is_available() and not args.cpu else "cpu")
     method = args.method
 
     if not os.path.exists(f'results-{method}.txt'):
@@ -114,11 +115,11 @@ def main():
     print ("Loading model: " + modelpath)
     print ("Loading weights: " + weightspath)
     if args.model == "erfnet":
-        model = ERFNet(NUM_CLASSES)
+        model = ERFNet(NUM_CLASSES).to(device)
     elif args.model =="enet":
-        model = ENet(NUM_CLASSES)
+        model = ENet(NUM_CLASSES).to(device)
     elif args.model == "bisenet":
-        model = BiSeNetV1(NUM_CLASSES)
+        model = BiSeNetV1(NUM_CLASSES).to(device)
 
     if (not args.cpu):
         model = torch.nn.DataParallel(model).cuda()
@@ -135,7 +136,7 @@ def main():
             else:
                 own_state[name].copy_(param)
         return model
-    model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
+    model = load_my_state_dict(model, torch.load(weightspath, map_location=device, loc: storage))
 
     if(temperature != 0 ):
         model = ModelWithTemperature(model, temperature = temperature)
@@ -150,12 +151,16 @@ def main():
         cov_inv = np.linalg.inv(cov)
         print("mean shape: ", means.shape)
         print("cov shape: ", cov.shape)
+        
+        # Convert to PyTorch tensors
+        means = torch.from_numpy(means).to(device)
+        cov_inv = torch.from_numpy(cov_inv).to(device)
                 
     
     for path in glob.glob(os.path.expanduser(str(args.input))):
         print(path)
         #images = torch.from_numpy(np.array(Image.open(path).convert('RGB'))).unsqueeze(0).float()
-        images = input_transform((Image.open(path).convert('RGB'))).unsqueeze(0).float()
+        images = input_transform((Image.open(path).convert('RGB'))).unsqueeze(0).float().to(device)
         
         with torch.no_grad():
             if args.model == "bisenet":
@@ -218,7 +223,8 @@ def main():
         else:
              ood_gts_list.append(ood_gts)
              anomaly_score_list.append(anomaly_result)
-        del result, anomaly_result, ood_gts, mask
+        
+        del result, anomaly_result, ood_gts, mask, image
         torch.cuda.empty_cache()
 
     file.write( "\n")
