@@ -47,31 +47,32 @@ NUM_CLASSES = 20
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = True
 
-def mahalanobis_distance(x, mean, covariance_inv):
+def mahalanobis_distance(f_x, mean, covariance_inv):
     """
-    Compute the Mahalanobis distance between a sample x and a class mean with the inverse covariance matrix.
-    x: sample
+    Compute the Mahalanobis distance between a sample f_x and a class mean with the inverse covariance matrix.
+    f_x: test sample feature vector (numpy array of shape [d])
     mean: class mean
     covariance_inv:
     
     Returns the Mahalanobis distance (scalar)
     """
-    diff = x - mean
-    return np.dot(diff.T, np.dot(covariance_inv, diff))
+    diff = f_x - mean
+    return diff.T @ (covariance_inv @ diff)
 
-def mahalanobis_score(f_x, means, con_inv):
+def mahalanobis_score(f_x, means, cov):
     """
     Compute the Mahalanobis distance-based confidence score for a test sample.
     
     f_x: test sample feature vector (numpy array of shape [d])
     means: class means (numpy array of shape [C, d])
-    con_inv: inverse of the covariance matrix (numpy array of shape [d, d])
+    cov: covariance matrix (numpy array of shape [d, d])
     
     Returns the confidence score (scalar)
     """
     max_distance = float('-inf')  # Start with a very small number
+    cov_inv = np.linalg.inv(cov)
     for c in range(means.shape[0]):  # Loop over each class
-        distance = mahalanobis_distance(f_x, means[c], con_inv)
+        distance = mahalanobis_distance(f_x, means[c], cov_inv)
         score = -distance
         if score > max_distance:
             max_distance = score
@@ -180,7 +181,8 @@ def main():
                 anomaly_result = anomaly_result.data.cpu().numpy()
             elif(method == "Mahalanobis"):
                 # Compute Mahalanobis distance
-                anomaly_result = mahalanobis_score(result.data.cpu().numpy(), means, cov)
+                anomaly_result = mahalanobis_score(F.softmax(result, dim=0), means, cov)
+                anomaly_result = anomaly_result.data.cpu().numpy()
                 print(f"Mahalanobis score: {anomaly_result}")
             else:
                 raise ValueError("Invalid method")
