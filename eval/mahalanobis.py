@@ -142,7 +142,7 @@ def main():
     cov_matrix = torch.zeros((20, 20), dtype=torch.float32, device='cuda')
     num_images = 0
 
-    for step, (images, labels) in enumerate(tqdm(loader)):
+    for images, labels in tqdm(loader):
         if not args.cpu:
             images = images.cuda()
             #labels = labels.cuda()
@@ -150,16 +150,15 @@ def main():
         output = None
         with torch.no_grad():
             if args.model == "bisenet":
-                result = F.softmax(model(images)[0].squeeze(0))
+                result = F.softmax(model(images)[0].squeeze(0), dim=0)
                 output = result.data.cpu().numpy()
             else: #TODO check ENet output
-                result = F.softmax(model(images).squeeze(0))
+                result = F.softmax(model(images).squeeze(0), dim=0)
                 output = result.data.cpu().numpy()
 
         # If mean is not computed, accumulate sum and count per class
         if not mean_is_computed:
             # Accumulate sum for each class
-            print(f"Output shape: {output.shape}")
             sum_dataset += np.sum(output, axis=(1, 2))
             
             # for c in range(NUM_CLASSES):
