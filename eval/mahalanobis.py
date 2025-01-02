@@ -141,7 +141,6 @@ def main():
     # Covariance matrices
     num_classes, height, width = pre_computed_mean.shape
     cov_matrices = torch.zeros((num_classes, 512, 512), dtype=torch.float32, device='cuda')
-    num_images = 0
 
     for step, (images, labels) in enumerate(tqdm(loader)):
         if not args.cpu:
@@ -173,7 +172,6 @@ def main():
                 # Center the output relative to the precomputed mean
                 centered = result[c] - pre_computed_mean[c]  # Shape (H, W)
                 cov_matrices[c] += centered @ centered.T
-        num_images += 1
 
     # After processing all images, calculate the mean per class
     if not mean_is_computed:
