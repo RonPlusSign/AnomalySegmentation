@@ -27,6 +27,7 @@ from dataset1 import cityscapes
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
 from tqdm import tqdm
+
 #Augmentations - different function implemented to perform random augments on both image and target
 class MyCoTransform(object):
     def __init__(self, enc, augment=True, height=512):
@@ -130,24 +131,14 @@ def main():
         pre_computed_mean = np.load(mean_path)
         pre_computed_mean = torch.from_numpy(pre_computed_mean).cuda()
         print(f"pre_computed_mean {pre_computed_mean.shape}")
+    
     # Augmentations and Normalizations
     co_transform = MyCoTransform(False, augment=False, height=512)#1024)
-    co_transform_val = MyCoTransform(False, augment=False, height=512)#1024)
-
+    
     # Dataset and Loader
     dataset_train = cityscapes(args.datadir, co_transform, 'train')#senza co_transform non funziona perché non lo trasforma in tensore
-    #dataset_train = cityscapes(args.datadir, co_transform, 'train')
-    #dataset_val = cityscapes(args.datadir, co_transform_val, 'val') serve solo train
-
-    # Calcoliamo i pesi delle classi dal dataset di addestramento
-    #weights = calculate_class_weights(dataset_train, NUM_CLASSES)
-    #print("Pesi delle classi:", weights)
 
     loader = DataLoader(dataset_train, num_workers=args.num_workers, batch_size=args.batch_size, shuffle=True)
-    #loader_val = DataLoader(dataset_val, num_workers=args.num_workers, batch_size=args.batch_size, shuffle=False) serve solo train 
-    
-
-    
     
     if args.model == "erfnet":
         model = ERFNet(NUM_CLASSES)
@@ -174,29 +165,17 @@ def main():
                 own_state[name].copy_(param)
         return model
     model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
-
-    
-    sum_dataset = np.zeros((20, 512, 1024), dtype=np.float32)
-    if mean_is_computed:
-        num_classes, height, width = pre_computed_mean.shape
-        #cov_matrices = np.zeros((num_classes, height * width, height * width), dtype=np.float32)
-        cov_matrices = torch.zeros((num_classes, 512, 512), dtype=torch.float32, device='cuda')  # Matrice di covarianza inizializzata su GPU bho mi sembra impossibile eppure ci sta
-    
-    num_images = 0 
     print ("Model and weights LOADED successfully")
     model.eval()
     
+    sum_dataset = np.zeros((20, 512, 1024), dtype=np.float32)
+    num_images = 0
+
     for step, (images, labels) in enumerate(tqdm(loader)):
-        #print(f"-----------{step/2974 * 100}-----------")
-        #images = torch.from_numpy(np.array(Image.open(path).convert('RGB'))).unsqueeze(0).float()
-        #images = input_transform((Image.open(path).convert('RGB'))).unsqueeze(0).float()
         if not args.cpu:
-                images = images.cuda()
-                #labels = labels.cuda()
-        #print(f"images {images.shape}")
-        #print(f"labels {labels.shape}")
-       
-            
+            images = images.cuda()
+            #labels = labels.cuda()
+           
         output = None
         with torch.no_grad():
             if args.model == "bisenet":
@@ -205,44 +184,25 @@ def main():
             else: #TODO check ENet output
                 result = model(images).squeeze(0)
                 output = result.data.cpu().numpy()
-                #print(f"output {output.shape}")
+
         if not mean_is_computed : 
             sum_dataset += output
-            
         else : # calcolo la covarianza
-            for c in range(num_classes):
-                
+            num_classes, height, width = pre_computed_mean.shape
+            cov_matrices = torch.zeros((num_classes, 512, 512), dtype=torch.float32, device='cuda')  
+            
+            for c in range(num_classes):  
                 # Centrare rispetto alla media della classe
                 centered =  result[c] - pre_computed_mean[c]  # Forma (H, W)
-                
-                # Appiattire localmente (H x W)
-                #centered_flattened = centered.flatten()
-                #print(f"centered_flattened shape: {centered_flattened.shape}")
-                #print(f"cov_matrices[c] shape: {cov_matrices[c].shape}")
-                #print("qui")
-                # Accumulare il prodotto centrato
                 cov_matrices[c] += centered @ centered.T
-                '''block_size = 500  # Ad esempio, suddividi in blocchi di 10.000
-                n = len(centered_flattened)
-
-                for i in range(0, n, block_size):
-                    #block_i = centered_flattened[i:i + block_size]
-
-                    # Calcola il prodotto esterno tra il blocco centrato e se stesso
-                    #block_cov = torch.outer(block_i, block_i)
-
-                    # Accumula il blocco nella posizione corretta di cov_matrices
-                    #cov_matrices[c, i:i + block_size, i:i + block_size] += block_cov
-                    cov_matrices[c, i:i + block_size, i:i + block_size] += torch.outer( centered_flattened[i:i + block_size],  centered_flattened[i:i + block_size])
-                    #del block_cov, block_i'''
-                
         num_images +=1
                     
     if not mean_is_computed:
-        print(f"sum_dataset : {sum_dataset.shape}")
+        print(f"sum_dataset : {sum_dataset}")
+        print(f"sum_dataset shape : {sum_dataset.shape}")
         print(f"num_images  : {num_images}")
         mean = sum_dataset / num_images
-        print(f"mean : {mean.shape}")
+        print(f"mean : {mean}")
         np.save(f"{args.loadDir}/save/mean_cityscapes_{args.model}.npy", mean)
         print(f"Mean output saved as '{args.loadDir}/save/mean_cityscapes_{args.model}.npy'")
     else : 
