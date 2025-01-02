@@ -125,8 +125,6 @@ def main():
 
     def load_my_state_dict(model, state_dict):  #custom function to load model when not all dict elements
         own_state = model.state_dict()
-        print(state_dict.keys())
-        print(own_state.keys())
         for name, param in state_dict.items():
             if name not in own_state:
                 if name.startswith("module."):
@@ -178,6 +176,7 @@ def main():
                 cov = np.load("/content/AnomalySegmentation/save/cov_matrix_erfnet.npy")
                 # Compute Mahalanobis distance
                 anomaly_result = mahalanobis_score(result.data.cpu().numpy(), means, cov)
+                print(f"Mahalanobis score: {anomaly_result}")
             else:
                 raise ValueError("Invalid method")
 
