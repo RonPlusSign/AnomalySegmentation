@@ -142,6 +142,14 @@ def main():
 
     print ("Model and weights LOADED successfully")
     model.eval()
+
+    if method == "Mahalanobis":
+        # Load mean and covariance matrices from "save" folder
+        means = np.load("/content/AnomalySegmentation/save/mean_cityscapes_erfnet.npy")
+        cov = np.load("/content/AnomalySegmentation/save/cov_matrix_erfnet.npy")
+        print("mean shape: ", means.shape)
+        print("cov shape: ", cov.shape)
+                
     
     for path in glob.glob(os.path.expanduser(str(args.input))):
         print(path)
@@ -171,9 +179,6 @@ def main():
                 anomaly_result = 1.0 - torch.max(F.softmax(result, dim=0), dim=0)[0]
                 anomaly_result = anomaly_result.data.cpu().numpy()
             elif(method == "Mahalanobis"):
-                # Load mean and covariance matrices from "save" folder
-                means = np.load("/content/AnomalySegmentation/save/mean_cityscapes_erfnet.npy")
-                cov = np.load("/content/AnomalySegmentation/save/cov_matrix_erfnet.npy")
                 # Compute Mahalanobis distance
                 anomaly_result = mahalanobis_score(result.data.cpu().numpy(), means, cov)
                 print(f"Mahalanobis score: {anomaly_result}")
