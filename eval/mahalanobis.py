@@ -1,7 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import os
-import cv2
-import glob
 import torch
 import random
 from PIL import Image, ImageOps
@@ -9,24 +7,16 @@ import numpy as np
 from erfnet import ERFNet
 import os.path as osp
 from argparse import ArgumentParser
-from ood_metrics import fpr_at_95_tpr, calc_metrics, plot_roc, plot_pr,plot_barcode
-from sklearn.metrics import roc_auc_score, roc_curve, auc, precision_recall_curve, average_precision_score
-
-from icecream import ic
-from temperature_scaling import ModelWithTemperature
-import torch.nn.functional as F # aggiunto io 
+import torch.nn.functional as F
 from torchvision.transforms import Compose, ToTensor, Normalize, Resize
 from transform import Relabel, ToLabel, Colorize
 from enet import ENet
 from bisenet import BiSeNetV1
-import sys
-seed = 42
-
-
 from dataset1 import cityscapes
 from torch.utils.data import DataLoader
-from torch.autograd import Variable
 from tqdm import tqdm
+
+seed = 42
 
 #Augmentations - different function implemented to perform random augments on both image and target
 class MyCoTransform(object):
@@ -64,21 +54,6 @@ class MyCoTransform(object):
 
         return input, target
 
-
-input_transform = Compose(
-    [
-        Resize((512, 1024), Image.BILINEAR),
-        ToTensor(),
-        #  Normalize([.485, .456, .406], [.229, .224, .225]),
-    ]
-)
-
-target_transform = Compose(
-    [
-        Resize((512, 1024), Image.NEAREST),
-    ]
-)
-
 # general reproducibility
 random.seed(seed)
 np.random.seed(seed)
@@ -98,32 +73,23 @@ def main():
         default="/content/Validation_Dataset/RoadObsticle21/images/*.webp",
         help="A single glob pattern such as 'directory/*.jpg'",
     )  
-    parser.add_argument('--loadDir',default="/content/AnomalySegmentation")
-    
+    parser.add_argument('--loadDir',default="/content/AnomalySegmentation") 
     parser.add_argument('--loadWeights', default="erfnet_pretrained.pth")
-    parser.add_argument('--model', default="erfnet")
-    
+    parser.add_argument('--model', default="erfnet") 
     parser.add_argument('--datadir', default="/home/shyam/ViT-Adapter/segmentation/data/cityscapes/")
     parser.add_argument('--num-workers', type=int, default=4)
     parser.add_argument('--batch-size', type=int, default=1)
     parser.add_argument('--cpu', action='store_true')
     parser.add_argument('--mean', default = '') #/save/mean_cityscapes_erfnet.npy
-
-
     args = parser.parse_args()
-    anomaly_score_list = []
-    ood_gts_list = []
 
- 
     #modelpath = args.loadDir +"/" +args.model + ".py"
     weightspath = args.loadDir + args.loadWeights
     mean_is_computed = len(args.mean) > 0
     mean_path = args.loadDir + args.mean
 
-
     print ("Loading model: " + args.model)
     print ("Loading weights: " + weightspath)
-    
     
     assert os.path.exists(args.datadir), "Error: datadir (dataset directory) could not be loaded"
 
@@ -136,7 +102,7 @@ def main():
     co_transform = MyCoTransform(False, augment=False, height=512)#1024)
     
     # Dataset and Loader
-    dataset_train = cityscapes(args.datadir, co_transform, 'train')#senza co_transform non funziona perché non lo trasforma in tensore
+    dataset_train = cityscapes(args.datadir, co_transform, 'train')
 
     loader = DataLoader(dataset_train, num_workers=args.num_workers, batch_size=args.batch_size, shuffle=True)
     
@@ -168,7 +134,13 @@ def main():
     print ("Model and weights LOADED successfully")
     model.eval()
     
+    # Track sum and count for mean
     sum_dataset = np.zeros((20, 512, 1024), dtype=np.float32)
+    image_count_per_class = np.zeros(NUM_CLASSES)
+
+    # Covariance matrices
+    num_classes, height, width = pre_computed_mean.shape
+    cov_matrices = torch.zeros((num_classes, 512, 512), dtype=torch.float32, device='cuda')
     num_images = 0
 
     for step, (images, labels) in enumerate(tqdm(loader)):
@@ -185,34 +157,46 @@ def main():
                 result = model(images).squeeze(0)
                 output = result.data.cpu().numpy()
 
-        if not mean_is_computed : 
-            sum_dataset += output
-        else : # calcolo la covarianza
-            num_classes, height, width = pre_computed_mean.shape
-            cov_matrices = torch.zeros((num_classes, 512, 512), dtype=torch.float32, device='cuda')  
-            
+        # If mean is not computed, accumulate sum and count per class
+        if not mean_is_computed:
+            # Accumulate sum for each class
+            for c in range(NUM_CLASSES):
+                # Add the output for class 'c' to the sum
+                sum_dataset[c] += output[c]
+                
+                # Count how many pixels of this class are present in the labels
+                # Count where the label equals the current class 'c'
+                image_count_per_class[c] += np.sum(labels == c).item()
+
+        else:
             for c in range(num_classes):  
-                # Centrare rispetto alla media della classe
-                centered =  result[c] - pre_computed_mean[c]  # Forma (H, W)
+                # Center the output relative to the precomputed mean
+                centered = result[c] - pre_computed_mean[c]  # Shape (H, W)
                 cov_matrices[c] += centered @ centered.T
-        num_images +=1
-                    
+        num_images += 1
+
+    # After processing all images, calculate the mean per class
     if not mean_is_computed:
-        print(f"sum_dataset : {sum_dataset}")
-        print(f"sum_dataset shape : {sum_dataset.shape}")
-        print(f"num_images  : {num_images}")
-        mean = sum_dataset / num_images
-        print(f"mean : {mean}")
+        mean = np.zeros_like(sum_dataset)
+        
+        for c in range(NUM_CLASSES):
+            if image_count_per_class[c] > 0:
+                # Divide the sum for class 'c' by the count of pixels for class 'c'
+                mean[c] = sum_dataset[c] / image_count_per_class[c]
+            else:
+                mean[c] = sum_dataset[c] / num_images  # Use the total number of images if the class isn't present
+        
+        print(f"Mean per class: {mean.shape}")
         np.save(f"{args.loadDir}/save/mean_cityscapes_{args.model}.npy", mean)
         print(f"Mean output saved as '{args.loadDir}/save/mean_cityscapes_{args.model}.npy'")
     else : 
         # Normalizza ogni matrice di covarianza
-        cov_matrices /= num_images
-        print(f"cov_matrices : {cov_matrices.shape}")
-        # Salva le matrici di covarianza per ogni classe
+        for c in range(NUM_CLASSES):
+            cov_matrices[c] /= image_count_per_class[c]
+        
+        print(f"Covariance matrix per class: {cov_matrices.shape}")
         np.save(f"{args.loadDir}/save/cov_matrices_{args.model}.npy", cov_matrices.data.cpu().numpy())
         print(f"Covariance matrices saved as '{args.loadDir}/save/cov_matrices_{args.model}.npy'")
-        
  
 
 if __name__ == '__main__':
