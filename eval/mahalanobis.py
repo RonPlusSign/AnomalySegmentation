@@ -165,24 +165,8 @@ def main():
                 
                 # Count how many pixels of this class are present in the labels
                 # Count where the label equals the current class 'c'
-                image_count_per_class[c] += np.sum(labels == c).item()
+                image_count_per_class[c] += np.sum(labels.cpu().numpy() == c).item()
         else:
-            (D, L) = load("trainData.txt")
-            plot_hist(D, L)
-            plot_scatter(D, L)
-
-
-            # mean(1) calcola la media dei valori nelle righe, quindi il risultato è un vettore di 6 elementi
-            mu = D.mean(1).reshape(D.shape[0], 1)
-            print('Mean:')
-            print(mu)
-            print()
-
-            # center the data
-            DC = D - mu
-
-            # Covariance matrix
-            C = (DC @ DC.T) / float(D.shape[1])
             for c in range(NUM_CLASSES):  
                 # Center the output relative to the precomputed mean
                 centered = result[c] - pre_computed_mean[c] 
