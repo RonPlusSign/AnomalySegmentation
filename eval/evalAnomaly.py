@@ -136,7 +136,7 @@ def main():
             else:
                 own_state[name].copy_(param)
         return model
-    model = load_my_state_dict(model, torch.load(weightspath, map_location=device, loc: storage))
+    model = load_my_state_dict(model, torch.load(weightspath, map_location=device))
 
     if(temperature != 0 ):
         model = ModelWithTemperature(model, temperature = temperature)
@@ -223,7 +223,7 @@ def main():
         else:
              ood_gts_list.append(ood_gts)
              anomaly_score_list.append(anomaly_result)
-        
+
         del result, anomaly_result, ood_gts, mask, image
         torch.cuda.empty_cache()
 
