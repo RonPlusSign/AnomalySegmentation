@@ -171,7 +171,7 @@ def main():
                 # pixel_count_per_class[c] += np.sum(labels.cpu().numpy() == c).item()
         else:
             centered = result - pre_computed_mean.reshape(-1, 1) # Convert from (20,) to (20, 1) to allow broadcasting
-            cov_matrix += centered.T @ centered
+            cov_matrix += centered @ centered.T
             # for c in range(NUM_CLASSES):
             #     # Center the output relative to the precomputed mean
             #     centered = result[c] - pre_computed_mean[c]
