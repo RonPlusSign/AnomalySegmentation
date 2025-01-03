@@ -6,7 +6,6 @@ import torch
 import random
 from PIL import Image
 import numpy as np
-from erfnet import ERFNet
 import os.path as osp
 from argparse import ArgumentParser
 from ood_metrics import fpr_at_95_tpr, calc_metrics, plot_roc, plot_pr,plot_barcode
@@ -16,9 +15,14 @@ from icecream import ic
 from temperature_scaling import ModelWithTemperature
 import torch.nn.functional as F # aggiunto io 
 from torchvision.transforms import Compose, ToTensor, Normalize, Resize
-from enet import ENet
-from bisenet import BiSeNetV1
 import sys
+
+from train.erfnet import ERFNet
+from train.enet import ENet
+from train.bisenet import BiSeNetV1
+from train.erfnet_isomaxplus import ERFNetIsoMaxPlus
+from train.resnet import Resnet18
+
 seed = 42
 
 input_transform = Compose(
@@ -56,7 +60,7 @@ def main():
     )  
     parser.add_argument('--loadDir',default="/content/AnomalySegmentation/trained_models/")
     parser.add_argument('--loadWeights', default="erfnet_pretrained.pth")
-    parser.add_argument('--model', default="erfnet")
+    parser.add_argument('--model', default="erfnet") #can be erfnet, erfnet_isomaxplus, enet, bisenet
     parser.add_argument('--subset', default="val")  #can be val or train (must have labels)
     parser.add_argument('--datadir', default="/home/shyam/ViT-Adapter/segmentation/data/cityscapes/")
     parser.add_argument('--num-workers', type=int, default=4)
@@ -72,9 +76,9 @@ def main():
 
     method = args.method
 
-    if not os.path.exists(f'results-{method}.txt'):
-        open(f'results-{method}.txt', 'w').close()
-    file = open(f'results-{method}.txt', 'a')
+    #if not os.path.exists(f'results-{method}.txt'):
+        #open(f'results-{method}.txt', 'w').close()
+    #file = open(f'results-{method}.txt', 'a')
 
     modelpath = args.loadDir +"/" +args.model + ".py"
     weightspath = args.loadDir + args.loadWeights
@@ -85,6 +89,8 @@ def main():
     print ("Loading weights: " + weightspath)
     if args.model == "erfnet":
         model = ERFNet(NUM_CLASSES)
+    elif args.model == "erfnet_isomaxplus":
+        model = ERFNetIsoMaxPlus(NUM_CLASSES)
     elif args.model =="enet":
         model = ENet(NUM_CLASSES)
     elif args.model == "bisenet":
@@ -123,7 +129,7 @@ def main():
         with torch.no_grad():
             if args.model == "bisenet":
                 result = model(images)[0].squeeze(0)
-            else: #TODO check ENet output
+            else:
                 result = model(images).squeeze(0)
 
         if args.void:
@@ -201,8 +207,8 @@ def main():
     print(f'AUPRC score: {prc_auc*100.0}')
     print(f'FPR@TPR95: {fpr*100.0}')
 
-    file.write(('    AUPRC score:' + str(prc_auc*100.0) + '   FPR@TPR95:' + str(fpr*100.0) ))
-    file.close()
+    #file.write(('    AUPRC score:' + str(prc_auc*100.0) + '   FPR@TPR95:' + str(fpr*100.0) ))
+    #file.close()
 
 if __name__ == '__main__':
     main()

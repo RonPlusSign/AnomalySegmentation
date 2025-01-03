@@ -162,10 +162,16 @@ def train(args, model, enc=False):
     if args.cuda:
         weight = weight.cuda()
 
-    # Define the loss function
-    if args.model == "erfnet" or args.model == "erfnet_isomaxplus":
+    # Define the criterion
+    if args.model == "erfnet_isomaxplus":
         if args.loss == "IsoMaxPlus":
             criterion = IsoMaxPlusLossSecondPart()
+        else:
+            # raise an error
+            raise ValueError("For erfnet_isomaxplus, the loss must be IsoMaxPlus")
+    elif args.model == "erfnet":
+        if args.loss == "IsoMaxPlus":
+            raise ValueError("To use IsoMaxPlus loss, please use the erfnet_isomaxplus model")
         elif args.loss == "LogitNorm":
             criterion = LogitNormLoss()
         elif args.loss == "Focal":
@@ -468,7 +474,9 @@ def main(args):
     model_file = importlib.import_module(args.model)
 
     if args.model == "erfnet":
-        model = model_file.ERFNet(NUM_CLASSES) # both for ERFNet and ERFNet_isomaxplus
+        model = model_file.ERFNet(NUM_CLASSES)
+    elif args.model == "erfnet_isomaxplus":
+        model = model_file.ERFNetIsoMaxPlus(NUM_CLASSES)
     elif args.model == "bisenet":
         model = model_file.BiSeNetV1(NUM_CLASSES)
     elif args.model == "enet":

@@ -135,8 +135,8 @@ class Decoder (nn.Module):
 
         return output
 
-#ERFNet
-class ERFNet(nn.Module):
+#ERFNetIsoMaxPlus Model definition
+class ERFNetIsoMaxPlus(nn.Module):
     def __init__(self, num_classes, encoder=None):  #use encoder to pass pretrained encoder
         super().__init__()
 
