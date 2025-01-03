@@ -22,6 +22,7 @@ from torchvision.transforms import ToTensor, ToPILImage
 from dataset import VOC12,cityscapes
 from transform import Relabel, ToLabel, Colorize
 from visualize import Dashboard
+from loss_isomax_plus import IsoMaxPlusLossSecondPart
 
 import importlib
 from iouEval import iouEval, getColorEntry
@@ -169,7 +170,13 @@ def train(args, model, enc=False):
 
     if args.cuda:
         weight = weight.cuda()
-    criterion = CrossEntropyLoss2d(weight)
+        
+    if args.loss == "IsoMaxPlus":
+        criterion = IsoMaxPlusLossSecondPart()
+    # elif args.loss == "LogitNorm":
+    #     criterion = LogitNormLoss()
+    else: # args.loss == "CrossEntropy"
+        criterion = CrossEntropyLoss2d(weight)
     print(type(criterion))
 
     savedir = f'../save/{args.savedir}'
@@ -613,6 +620,7 @@ if __name__ == '__main__':
     parser.add_argument('--decoder', action='store_true')
     parser.add_argument('--pretrainedEncoder') #, default="../trained_models/erfnet_encoder_pretrained.pth.tar")
     parser.add_argument('--visualize', action='store_true')
+    parser.add_argument('--loss', default="CrossEntropy") # values: ["CrossEntropy", "IsoMaxPlus", "LogitNorm"]
 
     parser.add_argument('--iouTrain', action='store_true', default=False) #recommended: False (takes more time to train otherwise)
     parser.add_argument('--iouVal', action='store_true', default=True)  
