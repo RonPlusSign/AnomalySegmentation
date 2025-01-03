@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.nn.init as init
 import torch.nn.functional as F
 
-from train.loss_isomaxplus import IsoMaxPlusLossFirstPart
+from train.losses.isomax_plus_loss import IsoMaxPlusLossFirstPart
 
 # Adaptation of the ERFNet model for IsoMaxPlus loss
 
