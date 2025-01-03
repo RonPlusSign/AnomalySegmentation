@@ -183,7 +183,7 @@ def main():
         del result, anomaly_result, ood_gts, mask
         torch.cuda.empty_cache()
 
-    file.write( "\n")
+    #file.write( "\n")
 
     # Calculate metrics: AUPRC and FPR@TPR95
     ood_gts = np.array(ood_gts_list) 
