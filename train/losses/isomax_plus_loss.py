@@ -2,6 +2,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch
 
+# Code from: https://github.com/dlmacedo/entropic-out-of-distribution-detection/blob/master/losses/isomaxplus.py
+# Paper: https://arxiv.org/pdf/2105.14399
+
 class IsoMaxPlusLossFirstPart(nn.Module):
     """This part replaces the model classifier output layer nn.Linear()"""
     def __init__(self, num_features, num_classes, temperature=1.0):

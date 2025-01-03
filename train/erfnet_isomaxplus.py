@@ -1,4 +1,3 @@
-
 # ERFNet full model definition for Pytorch
 # Sept 2017
 # Eduardo Romera
@@ -8,7 +7,9 @@ import torch.nn as nn
 import torch.nn.init as init
 import torch.nn.functional as F
 
-from loss_isomax_plus import IsoMaxPlusLossFirstPart
+from train.loss_isomaxplus import IsoMaxPlusLossFirstPart
+
+# Adaptation of the ERFNet model for IsoMaxPlus loss
 
 class DownsamplerBlock (nn.Module):
     def __init__(self, ninput, noutput):
