@@ -123,24 +123,20 @@ class Decoder (nn.Module):
         self.layers.append(non_bottleneck_1d(16, 0, 1))
         
         if self.loss_first_part is not None:
-            self.output_conv = nn.Sequential(
-                nn.AdaptiveAvgPool2d(1),  # Global average pooling
-                nn.Flatten(),  # Flatten spatial dimensions
-                self.loss_first_part  # Apply IsoMaxPlusLossFirstPart
-            )
-
+            self.output_conv = nn.Conv2d(16, loss_first_part.num_features, kernel_size=1)
         else:
             self.output_conv = nn.ConvTranspose2d(16, num_classes, 2, stride=2, padding=0, output_padding=0, bias=True)
 
 
     def forward(self, input):
         output = input
-
         for layer in self.layers:
             output = layer(output)
 
         output = self.output_conv(output)
 
+        if self.loss_first_part is not None:
+            output = self.loss_first_part(output)  # Apply IsoMaxPlusLossFirstPart
         return output
 
 #ERFNet
