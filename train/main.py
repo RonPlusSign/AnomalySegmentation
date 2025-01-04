@@ -28,7 +28,7 @@ from iouEval import iouEval, getColorEntry
 from shutil import copyfile
 from pprint import pprint
 
-from losses.isomax_plus_loss import IsoMaxPlusLossSecondPart
+from losses.isomax_plus_loss import IsoMaxPlusLossSecondPart, IsoMaxPlusLossFirstPart
 from losses.cross_entropy_loss import CrossEntropyLoss2d
 from losses.logit_norm_loss import LogitNormLoss
 from losses.focal_loss import FocalLoss
@@ -481,7 +481,8 @@ def main(args):
     if args.model == "erfnet":
         model = model_file.ERFNet(NUM_CLASSES)
     elif args.model == "erfnet_isomaxplus":
-        model = model_file.ERFNet(NUM_CLASSES, use_isomaxplus=True)
+        loss_first_part = IsoMaxPlusLossFirstPart(16, 20)
+        model = model_file.ERFNet(NUM_CLASSES, loss_first_part=loss_first_part)
     elif args.model == "bisenet":
         model = model_file.BiSeNetV1(NUM_CLASSES)
     elif args.model == "enet":

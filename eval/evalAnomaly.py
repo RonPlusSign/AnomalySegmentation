@@ -20,8 +20,8 @@ import sys
 from train.erfnet import ERFNet
 from train.enet import ENet
 from train.bisenet import BiSeNetV1
-from train.erfnet_isomaxplus import ERFNetIsoMaxPlus
 from train.resnet import Resnet18
+from train.losses.isomax_plus_loss import IsoMaxPlusLossFirstPart
 
 seed = 42
 
@@ -90,7 +90,8 @@ def main():
     if args.model == "erfnet":
         model = ERFNet(NUM_CLASSES)
     elif args.model == "erfnet_isomaxplus":
-        model = ERFNet(NUM_CLASSES, use_isomaxplus=True)
+        loss_first_part = IsoMaxPlusLossFirstPart(16, 20)
+        model = ERFNet(NUM_CLASSES, loss_first_part=loss_first_part)
     elif args.model =="enet":
         model = ENet(NUM_CLASSES)
     elif args.model == "bisenet":

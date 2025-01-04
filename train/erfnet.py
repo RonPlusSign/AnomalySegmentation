@@ -109,10 +109,9 @@ class UpsamplerBlock (nn.Module):
         return F.relu(output)
 
 class Decoder (nn.Module):
-    def __init__(self, num_classes, use_isomaxplus=False):
+    def __init__(self, num_classes, loss_first_part=None):
         super().__init__()
-        self.use_isomaxplus = use_isomaxplus
-
+        self.loss_first_part = loss_first_part
         self.layers = nn.ModuleList()
 
         self.layers.append(UpsamplerBlock(128,64))
@@ -123,13 +122,9 @@ class Decoder (nn.Module):
         self.layers.append(non_bottleneck_1d(16, 0, 1))
         self.layers.append(non_bottleneck_1d(16, 0, 1))
 
-        if use_isomaxplus: # Use ConvTranspose2d and then IsoMaxPlus
-            self.output_conv = nn.Sequential(
-                nn.ConvTranspose2d(16, 16, 2, stride=2, padding=0, output_padding=0, bias=True),
-                IsoMaxPlusLossFirstPart(1024, num_classes)
-            )
-        else:
-            self.output_conv = nn.ConvTranspose2d(16, 16, 2, stride=2, padding=0, output_padding=0, bias=True)
+        if self.loss_first_part is None:
+            self.output_conv = nn.ConvTranspose2d(16, num_classes, 2, stride=2, padding=0, output_padding=0, bias=True)
+
 
     def forward(self, input):
         output = input
@@ -137,20 +132,26 @@ class Decoder (nn.Module):
         for layer in self.layers:
             output = layer(output)
 
-        output = self.output_conv(output)
+        if self.use_isomaxplus:
+            # Use IsoMaxPlusLossFirstPart instead of final conv layer
+            output = F.adaptive_avg_pool2d(output, 1)  # Global average pooling
+            output = output.view(output.size(0), -1)  # Flatten spatial dimensions
+            output = self.loss_first_part(output)  # Apply IsoMaxPlusLossFirstPart
+        else:
+            output = self.output_conv(output)
 
         return output
 
 #ERFNet
 class ERFNet(nn.Module):
-    def __init__(self, num_classes, encoder=None, use_isomaxplus=False):  #use encoder to pass pretrained encoder
+    def __init__(self, num_classes, encoder=None, loss_first_part=None):  #use encoder to pass pretrained encoder
         super().__init__()
 
         if (encoder == None):
             self.encoder = Encoder(num_classes)
         else:
             self.encoder = encoder
-        self.decoder = Decoder(num_classes, use_isomaxplus)
+        self.decoder = Decoder(num_classes, loss_first_part)
 
     def forward(self, input, only_encode=False):
         if only_encode:
