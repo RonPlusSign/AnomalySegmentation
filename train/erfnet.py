@@ -124,10 +124,7 @@ class Decoder (nn.Module):
         self.layers.append(non_bottleneck_1d(16, 0, 1))
 
         if use_isomaxplus: # Use ConvTranspose2d and then IsoMaxPlus
-            self.output_conv = nn.Sequential(
-                nn.ConvTranspose2d(16, 16, 2, stride=2, padding=0, output_padding=0, bias=True),
-                IsoMaxPlusLossFirstPart(1024, num_classes)
-            )
+            self.output_conv = IsoMaxPlusLossFirstPart(16, num_classes)
         else:
             self.output_conv = nn.ConvTranspose2d(16, 16, 2, stride=2, padding=0, output_padding=0, bias=True)
 
