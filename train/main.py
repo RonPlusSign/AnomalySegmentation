@@ -28,10 +28,10 @@ from iouEval import iouEval, getColorEntry
 from shutil import copyfile
 from pprint import pprint
 
-from train.losses.isomax_plus_loss import IsoMaxPlusLossSecondPart
-from train.losses.cross_entropy_loss import CrossEntropyLoss2d
-from train.losses.logit_norm_loss import LogitNormLoss
-from train.losses.focal_loss import FocalLoss
+from .losses.isomax_plus_loss import IsoMaxPlusLossSecondPart
+from .losses.cross_entropy_loss import CrossEntropyLoss2d
+from .losses.logit_norm_loss import LogitNormLoss
+from .losses.focal_loss import FocalLoss
 
 NUM_CHANNELS = 3
 NUM_CLASSES = 20  # 19 classes + void
@@ -595,7 +595,7 @@ if __name__ == '__main__':
     parser.add_argument('--decoder', action='store_true')
     parser.add_argument('--pretrainedEncoder') #, default="../trained_models/erfnet_encoder_pretrained.pth.tar")
     parser.add_argument('--visualize', action='store_true')
-    parser.add_argument('--loss', default="CrossEntropy") # values: ["CrossEntropy", "IsoMaxPlus", "LogitNorm"]
+    parser.add_argument('--loss', default="CrossEntropy") # values: ["CrossEntropy", "IsoMaxPlus", "LogitNorm", "Focal"]
 
     parser.add_argument('--iouTrain', action='store_true', default=False) #recommended: False (takes more time to train otherwise)
     parser.add_argument('--iouVal', action='store_true', default=True)  
