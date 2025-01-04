@@ -486,7 +486,7 @@ def main(args):
         model = model_file.ENet(NUM_CLASSES)
 
     # Load weights for fine-tuning
-    if args.FineTune :
+    if args.FineTune:
         weightspath =f"../trained_models/{args.loadWeights}"
 
         def load_my_state_dict(model, state_dict):  #custom function to load model when not all dict elements
@@ -496,18 +496,20 @@ def main(args):
             for name, param in state_dict.items():
                 if name not in own_state:
                     if name.startswith("module."):
-                        if own_state[name].size() != param.size():
-                            print(f"Size mismatch for {name}: {own_state[name].size()} vs {param.size()}")
+                        stripped_name = name.split("module.")[-1]
+                        if stripped_name not in own_state:
+                            print(f"Skipping {name} as {stripped_name} is not in the model's state dict")
                             continue
-    
-                        own_state[name.split("module.")[-1]].copy_(param)
+                        if own_state[stripped_name].size() != param.size():
+                            print(f"Size mismatch for {stripped_name}: {own_state[stripped_name].size()} vs {param.size()}")
+                            continue
+                        own_state[stripped_name].copy_(param)
                     else:
-                        print(name, " not loaded")
+                        print(f"Skipping {name} as it is not in the model's state dict")
                         continue
                 else:
                     if own_state[name].size() != param.size():
-                        print(f"{name} in own_state")
-                        print(f"Size mismatch for {name}: {own_state[name].size()} vs {param.size()}")
+                        print(f"{name} in own_state, but size mismatch: {own_state[name].size()} vs {param.size()}")
                     if "conv_out.conv_out" in name or "conv_out16.conv_out" in name or "conv_out32.conv_out" in name :
                         new_param = torch.zeros_like(own_state[name])
                         new_param[:param.size(0)] = param  # Copy matching dimensions
