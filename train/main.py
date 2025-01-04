@@ -284,8 +284,6 @@ def train(args, model, enc=False):
             
             if args.model == "erfnet" or args.model == "erfnet_isomaxplus":
                 outputs = model(inputs, only_encode=enc) 
-            elif args.model == "bisenet":
-                outputs = model(inputs)[0]
             else:
                 outputs = model(inputs)
 
@@ -305,7 +303,10 @@ def train(args, model, enc=False):
             time_train.append(time.time() - start_time)
 
             if (doIouTrain):
-                iouEvalTrain.addBatch(outputs.max(1)[1].unsqueeze(1).data, targets.data)
+                if args.model == "bisenet":
+                    iouEvalTrain.addBatch(outputs[0].max(1)[1].unsqueeze(1).data, targets.data)
+                else:
+                    iouEvalTrain.addBatch(outputs.max(1)[1].unsqueeze(1).data, targets.data)
                 
             if args.visualize and args.steps_plot > 0 and step % args.steps_plot == 0:
                 start_time_plot = time.time()
@@ -354,8 +355,6 @@ def train(args, model, enc=False):
 
             if args.model == "erfnet" or args.model == "erfnet_isomaxplus":
                 outputs = model(inputs, only_encode=enc) 
-            elif args.model == "bisenet":
-                outputs = model(inputs)[0]
             else: 
                 outputs = model(inputs)
 
@@ -374,7 +373,10 @@ def train(args, model, enc=False):
             #Add batch to calculate TP, FP and FN for iou estimation
             if (doIouVal):
                 #start_time_iou = time.time()
-                iouEvalVal.addBatch(outputs.max(1)[1].unsqueeze(1).data, targets.data)
+                if args.model == "bisenet":
+                    iouEvalVal.addBatch(outputs[0].max(1)[1].unsqueeze(1).data, targets.data)
+                else:
+                    iouEvalVal.addBatch(outputs.max(1)[1].unsqueeze(1).data, targets.data)
                 #print ("Time to add confusion matrix: ", time.time() - start_time_iou)
 
             if args.visualize and args.steps_plot > 0 and step % args.steps_plot == 0:
