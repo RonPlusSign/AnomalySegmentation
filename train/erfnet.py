@@ -125,7 +125,7 @@ class Decoder (nn.Module):
 
         conv = nn.ConvTranspose2d(16, 16, 2, stride=2, padding=0, output_padding=0, bias=True) # (batch_size, classes, 512, 1024)
         if use_isomaxplus: # Use ConvTranspose2d and then IsoMaxPlus
-            self.output_conv = nn.Sequential(conv, IsoMaxPlusLossFirstPart(512*1024, num_classes))
+            self.output_conv = nn.Sequential(conv, IsoMaxPlusLossFirstPart(1024, num_classes))
         else:
             self.output_conv = conv
 
