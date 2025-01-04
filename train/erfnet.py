@@ -121,8 +121,15 @@ class Decoder (nn.Module):
         self.layers.append(UpsamplerBlock(64,16))
         self.layers.append(non_bottleneck_1d(16, 0, 1))
         self.layers.append(non_bottleneck_1d(16, 0, 1))
+        
+        if self.loss_first_part is not None:
+            self.output_conv = nn.Sequential(
+                nn.AdaptiveAvgPool2d(1),  # Global average pooling
+                nn.Flatten(),  # Flatten spatial dimensions
+                self.loss_first_part  # Apply IsoMaxPlusLossFirstPart
+            )
 
-        if self.loss_first_part is None:
+        else:
             self.output_conv = nn.ConvTranspose2d(16, num_classes, 2, stride=2, padding=0, output_padding=0, bias=True)
 
 
@@ -132,13 +139,7 @@ class Decoder (nn.Module):
         for layer in self.layers:
             output = layer(output)
 
-        if self.use_isomaxplus:
-            # Use IsoMaxPlusLossFirstPart instead of final conv layer
-            output = F.adaptive_avg_pool2d(output, 1)  # Global average pooling
-            output = output.view(output.size(0), -1)  # Flatten spatial dimensions
-            output = self.loss_first_part(output)  # Apply IsoMaxPlusLossFirstPart
-        else:
-            output = self.output_conv(output)
+        output = self.output_conv(output)
 
         return output
 
