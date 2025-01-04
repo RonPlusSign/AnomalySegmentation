@@ -135,6 +135,9 @@ class Decoder (nn.Module):
 
         output = self.output_conv(output)
 
+        # Apply upsampling to match the target resolution (512x1024)
+        output = F.interpolate(output, size=(512, 1024), mode='bilinear', align_corners=True)
+
         if self.loss_first_part is not None:
             output = self.loss_first_part(output)  # Apply IsoMaxPlusLossFirstPart
         return output
