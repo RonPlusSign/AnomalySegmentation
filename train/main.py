@@ -470,19 +470,20 @@ def main(args):
         myfile.write(str(args))
 
     #Load Model
-    assert os.path.exists(args.model + ".py"), "Error: model definition not found"
-    model_file = importlib.import_module(args.model)
+    if args.model == "erfnet_isomaxplus":
+        model_file = importlib.import_module("erfnet")
+    else:
+        assert os.path.exists(args.model + ".py"), "Error: model definition not found"
+        model_file = importlib.import_module(args.model)
 
     if args.model == "erfnet":
         model = model_file.ERFNet(NUM_CLASSES)
     elif args.model == "erfnet_isomaxplus":
-        model = model_file.ERFNetIsoMaxPlus(NUM_CLASSES)
+        model = model_file.ERFNet(NUM_CLASSES, use_isomaxplus=True)
     elif args.model == "bisenet":
         model = model_file.BiSeNetV1(NUM_CLASSES)
     elif args.model == "enet":
         model = model_file.ENet(NUM_CLASSES)
-
-    copyfile(args.model + ".py", savedir + '/' + args.model + ".py")
 
     # Load weights for fine-tuning
     if args.FineTune :

@@ -8,6 +8,8 @@ import torch.nn as nn
 import torch.nn.init as init
 import torch.nn.functional as F
 
+from losses.isomax_plus_loss import IsoMaxPlusLossFirstPart
+
 class DownsamplerBlock (nn.Module):
     def __init__(self, ninput, noutput):
         super().__init__()
@@ -107,7 +109,7 @@ class UpsamplerBlock (nn.Module):
         return F.relu(output)
 
 class Decoder (nn.Module):
-    def __init__(self, num_classes):
+    def __init__(self, num_classes, use_isomaxplus=False):
         super().__init__()
 
         self.layers = nn.ModuleList()
@@ -120,7 +122,10 @@ class Decoder (nn.Module):
         self.layers.append(non_bottleneck_1d(16, 0, 1))
         self.layers.append(non_bottleneck_1d(16, 0, 1))
 
-        self.output_conv = nn.ConvTranspose2d( 16, num_classes, 2, stride=2, padding=0, output_padding=0, bias=True)
+        if use_isomaxplus:
+            self.output_conv = IsoMaxPlusLossFirstPart(16, num_classes) # Use IsoMaxPlus instead of nn.ConvTranspose2d
+        else:
+            self.output_conv = nn.ConvTranspose2d( 16, num_classes, 2, stride=2, padding=0, output_padding=0, bias=True)
 
     def forward(self, input):
         output = input
@@ -134,14 +139,14 @@ class Decoder (nn.Module):
 
 #ERFNet
 class ERFNet(nn.Module):
-    def __init__(self, num_classes, encoder=None):  #use encoder to pass pretrained encoder
+    def __init__(self, num_classes, encoder=None, use_isomaxplus=False):  #use encoder to pass pretrained encoder
         super().__init__()
 
         if (encoder == None):
             self.encoder = Encoder(num_classes)
         else:
             self.encoder = encoder
-        self.decoder = Decoder(num_classes)
+        self.decoder = Decoder(num_classes, use_isomaxplus)
 
     def forward(self, input, only_encode=False):
         if only_encode:
