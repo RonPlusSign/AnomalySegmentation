@@ -232,18 +232,18 @@ def train(args, model, enc=False):
 
     # Define the optimizer  
     if args.model == "erfnet" or args.model == "erfnet_isomaxplus":
-        optimizer = Adam(model.parameters(), 5e-5 if args.fine_tuning else 5e-4, betas=(0.9, 0.999), eps=1e-08, weight_decay=1e-4)  
+        optimizer = Adam(model.parameters(), 5e-5 if args.FineTune else 5e-4, betas=(0.9, 0.999), eps=1e-08, weight_decay=1e-4)  
     elif args.model == "bisenet":
-        optimizer = SGD(model.parameters(), lr=2.5e-3 if args.fine_tuning else 2.5e-2, momentum=0.9, weight_decay=1e-4)
+        optimizer = SGD(model.parameters(), lr=2.5e-3 if args.FineTune else 2.5e-2, momentum=0.9, weight_decay=1e-4)
     elif args.model == "enet":
-        optimizer = Adam(model.parameters(), lr=5e-5 if args.fine_tuning else 5e-4, weight_decay=0.0002)
+        optimizer = Adam(model.parameters(), lr=5e-5 if args.FineTune else 5e-4, weight_decay=0.0002)
 
     # Define the learning rate scheduler
     if args.model == "erfnet" or args.model == "erfnet_isomaxplus" or args.model == "bisenet":
         lambda1 = lambda epoch: pow((1 - ((epoch - 1) / args.num_epochs)), 0.9)
         scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda1)  ## scheduler 2
     elif args.model == 'enet':
-        scheduler = lr_scheduler.StepLR(optimizer, 7 if args.fine_tuning else 100, 0.1)
+        scheduler = lr_scheduler.StepLR(optimizer, 7 if args.FineTune else 100, 0.1)
 
     # Visualize the model
     if args.visualize and args.steps_plot > 0:
