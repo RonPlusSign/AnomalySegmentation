@@ -141,14 +141,13 @@ def mahalanobis_distance_score(output, means, cov_inv):
     centered = output_expanded - means_expanded  # (num_classes, height * width, num_features)
 
     # Calcola lo score di Mahalanobis
-    scores = -torch.einsum(
+    scores = torch.einsum(   #TODO c'era il meno
         'npi,ij,npj->np',
         centered, cov_inv, centered
     )  # (num_classes, height * width)
 
     # Trova il massimo score per ogni pixel
-    M_scores_flat = scores.max(dim=0).values  # (height * width)
-
+    M_scores_flat = torch.abs(scores.max(dim=0).values)  # (height * width) era senza abs
     # Rimodella in (height, width)
     M_scores = M_scores_flat.view(height, width)
 
@@ -165,7 +164,7 @@ def mahalanobis_distance_score(output, means, cov_inv):
 
     assert torch.isclose(M_scores[i, j], manual_max), "L'ordine non è mantenuto!"
     print("Ordine verificato e corretto!")
-    
+
     return M_scores
 
 
