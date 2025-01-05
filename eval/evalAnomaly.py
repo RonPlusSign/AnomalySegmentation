@@ -82,7 +82,7 @@ torch.backends.cudnn.benchmark = True
 #     return max_distance
 
 
-def mahalanobis_distance_per_pixel(f_x_pixel, mean, covariance_inv):
+'''def mahalanobis_distance_per_pixel(f_x_pixel, mean, covariance_inv):
     """
     Compute the Mahalanobis distance for a single pixel's feature vector.
     f_x_pixel: feature vector for a single pixel (numpy array of shape (20,))
@@ -92,10 +92,20 @@ def mahalanobis_distance_per_pixel(f_x_pixel, mean, covariance_inv):
     Returns the Mahalanobis distance (scalar).
     """
     diff = f_x_pixel - mean  # Difference between pixel feature and class mean
-    return diff.T @ covariance_inv @ diff  # Mahalanobis distance
+    return diff.T @ covariance_inv @ diff  # Mahalanobis distance'''
+def mahalanobis_distance_score(output, centers, inv_cov_matrix, layer=16):
+    """
+    Computes Mahalanobis distances of a batch, when the centers and covariance
+    matrix are already computed, without preprocessing.
+    """
+    num_classes = len(centers)
+    zero_m_feat = output - center[: , None, None ] #[output - centers[c] for c in range(num_classes)]
+    zero_m_feat = torch.stack(zero_m_feat)
+    distances = -torch.matmul(zero_m_feat, inv_cov_matrix).matmul(zero_m_feat.transpose(1,2)).diagonal()
+    return(distances.max(1).values)
 
 
-def mahalanobis_score(f_x, means, covariance_inv):
+'''def mahalanobis_score(f_x, means, covariance_inv):
     """
     Compute the Mahalanobis distance-based confidence score for a test sample (image).
     
@@ -119,7 +129,7 @@ def mahalanobis_score(f_x, means, covariance_inv):
                     max_scores[h, w] = score
 
     # Aggregate the scores over all pixels (e.g., average, sum, or max)
-    return np.mean(max_scores)  # Return the mean confidence score
+    return np.mean(max_scores)  # Return the mean confidence score'''
 
 
 def main():
@@ -228,7 +238,7 @@ def main():
                 anomaly_result = anomaly_result.data.cpu().numpy()
             elif(method == "Mahalanobis"):
                 # Compute Mahalanobis distance
-                anomaly_result = mahalanobis_score(F.softmax(result, dim=0), means, cov_inv)
+                anomaly_result = mahalanobis_distance_score(F.softmax(result, dim=0), means, cov_inv)
                 anomaly_result = anomaly_result.data.cpu().numpy()
                 print(f"Mahalanobis score: {anomaly_result}")
             else:
