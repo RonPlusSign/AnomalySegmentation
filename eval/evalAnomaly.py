@@ -276,7 +276,7 @@ def main():
              ood_gts_list.append(ood_gts)
              anomaly_score_list.append(anomaly_result)
 
-        del result, anomaly_result, ood_gts, mask, image
+        del result, anomaly_result, ood_gts, mask, images
         torch.cuda.empty_cache()
 
     file.write( "\n")
