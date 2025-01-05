@@ -124,9 +124,6 @@ class Decoder (nn.Module):
         self.layers.append(non_bottleneck_1d(16, 0, 1))
         self.layers.append(non_bottleneck_1d(16, 0, 1))
         
-        #if use_isomaxplus:
-            #self.output_conv = nn.Conv2d(16, self.loss_first_part.num_features, kernel_size=1)
-        #else:
         self.output_conv = nn.ConvTranspose2d(16, num_classes, 2, stride=2, padding=0, output_padding=0, bias=True)
 
 
@@ -138,8 +135,6 @@ class Decoder (nn.Module):
         output = self.output_conv(output)
 
         if self.loss_first_part is not None:
-            # Apply upsampling to match the target resolution (512x1024)
-            output = F.interpolate(output, size=(512, 1024), mode='bilinear', align_corners=True)
             # Apply IsoMaxPlusLossFirstPart
             output = self.loss_first_part(output)
         return output
