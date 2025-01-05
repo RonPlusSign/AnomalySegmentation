@@ -55,17 +55,8 @@ def mahalanobis_distance_score(output, means, cov_inv):
     means: class means (numpy array of shape (20,20))
     covariance_inv: inverse of covariance matrix (numpy array of shape (20, 20))
     
-    Returns the confidence score (scalar)
+    Returns the confidence score (512x1024)
     """
-    """
-    max_distance = float('-inf')  # Start with a very small number
-    for c in range(NUM_CLASSES):  # Loop over each class
-        mean_c = means[c].reshape(NUM_CLASSES, -1) # (20,1)
-        centered = output - mean_c # (20, 512, 1024)
-        distance = centered.T @ (covariance_inv @ centered) # (20, 512, 1024) @ ((20, 20) @ (20, 512, 1024)) =  (512, 1024)
-        score = -distance
-        if score > max_distance:
-            max_distance = score
     """
     # Inizializza il risultato finale per i punteggi
     M_scores = torch.empty(512, 1024)  # Uno score per ogni pixel
@@ -86,6 +77,24 @@ def mahalanobis_distance_score(output, means, cov_inv):
 
             # Trova il massimo tra tutti gli score
             M_scores[i, j] = max(scores)
+
+    return M_scores
+    """
+    # Inizializza il risultato finale per i punteggi
+    M_scores = torch.empty(512, 1024, device=output.device)  # Uno score per ogni pixel
+
+    # Reshape output per avere i pixel come dimensione principale
+    output_reshaped = output.permute(1, 2, 0).reshape(-1, output.size(0))  # (512*1024, 20)
+
+    # Calcola lo score per ciascuna classe c
+    scores = torch.empty((512 * 1024, NUM_CLASSES), device=output.device)
+    for c in range(NUM_CLASSES):
+        mean_c = means[c]  # Media per la classe c
+        centered = output_reshaped - mean_c  # (512*1024, 20)
+        scores[:, c] = -torch.einsum('ij,jk,ik->i', centered, cov_inv, centered)  # (512*1024,)
+
+    # Trova il massimo tra tutti gli score
+    M_scores = scores.max(dim=1)[0].reshape(512, 1024)
 
     return M_scores
 
