@@ -103,7 +103,7 @@ def main():
     # Dataset and Loader
     dataset_train = cityscapes(args.datadir, co_transform, 'train')
 
-    loader = DataLoader(dataset_train, num_workers=args.num_workers, batch_size=args.batch_size, shuffle=True)
+    loader = DataLoader(dataset_train, num_workers=args.num_workers, batch_size=1, shuffle=True)
     
     if args.model == "erfnet":
         model = ERFNet(NUM_CLASSES)
