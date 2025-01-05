@@ -137,11 +137,12 @@ def mahalanobis_distance_score(output, means, cov_inv):
     # Calcola il prodotto Mahalanobis per tutte le classi contemporaneamente
     centered = output_centered.reshape(-1, NUM_CLASSES)  # (512*1024, 20)
     scores = -torch.sum(centered @ cov_inv * centered, dim=1)  # (512*1024,)
-    
+    print("scores", scores)
     # Trova il massimo punteggio per ogni pixel
     M_scores = scores.max(dim=1)[0].reshape(output.size(1), output.size(2))  # (512, 1024)
 
     print(f"Mahalanobis score: {M_scores.shape}")
+    return M_scores
 
 
 
