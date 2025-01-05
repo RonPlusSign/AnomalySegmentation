@@ -17,11 +17,9 @@ import torch.nn.functional as F # aggiunto io
 from torchvision.transforms import Compose, ToTensor, Normalize, Resize
 import sys
 
-from train.erfnet import ERFNet
-from train.enet import ENet
-from train.bisenet import BiSeNetV1
-from train.resnet import Resnet18
-from train.losses.isomax_plus_loss import IsoMaxPlusLossFirstPart
+from ..train.erfnet import ERFNet
+from ..train.enet import ENet
+from ..train.bisenet import BiSeNetV1
 
 seed = 42
 
