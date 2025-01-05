@@ -134,7 +134,7 @@ class Decoder (nn.Module):
 
         output = self.output_conv(output)
 
-        if self.loss_first_part is not None:
+        if hasattr(self, 'loss_first_part'):
             # Apply IsoMaxPlusLossFirstPart
             output = self.loss_first_part(output)
         return output
