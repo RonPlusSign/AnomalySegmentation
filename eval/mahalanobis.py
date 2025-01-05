@@ -78,7 +78,6 @@ def main():
     parser.add_argument('--model', default="erfnet") 
     parser.add_argument('--datadir', default="/home/shyam/ViT-Adapter/segmentation/data/cityscapes/")
     parser.add_argument('--num-workers', type=int, default=4)
-    parser.add_argument('--batch-size', type=int, default=1)
     parser.add_argument('--cpu', action='store_true')
     parser.add_argument('--mean', default = '') #/save/mean_cityscapes_erfnet.npy
     args = parser.parse_args()
@@ -155,27 +154,31 @@ def main():
             else: #TODO check ENet output
                 result = F.softmax(model(images).squeeze(0), dim=0)
                 output = result.data.cpu().numpy()
-            result = result.reshape(20, -1) # Convert from (20, 512, 1024) to (20, 512*1024)
         
         # If mean is not computed, accumulate sum and count per class
         if not mean_is_computed:
             # Accumulate the sum of the output for each class
-            for b in range(args.batch_size):
-                for c in range(NUM_CLASSES):
-                    # Create a mask for the pixels corresponding to class `c`
-                    mask = (labels[b] == c)
-                    print(f"Mask shape: {mask.shape}")
-                    print(f"Output shape: {output.shape}")
-                    print(f"output[b, :, mask] shape: {output[b, :, mask].shape}")
-                    
-                    # Accumulate the sum of the output for class `c`
-                    sum_per_class[c] += np.sum(output[b, :, mask])
-                    print(f"Sum per class shape: {sum_per_class[c].shape}")
+            for c in range(NUM_CLASSES):
+                # Create a mask for the pixels corresponding to class `c`
+                mask = (labels == c)
+                print(f"Mask shape: {mask.shape}")
+                print(f"Output shape: {output.shape}")
+                print(f"output[b, :, mask] shape: {output[:, mask].shape}")
+                
+                # Accumulate the sum of the output for class `c`
+                sum_per_class[c] += np.sum(output[:, mask])
+                print(f"Sum per class shape: {sum_per_class[c].shape}")
 
-                    # Accumulate the count of pixels for class `c`
-                    pixel_count_per_class[c] += np.sum(mask)
+                # Accumulate the count of pixels for class `c`
+                pixel_count_per_class[c] += np.sum(mask)
 
         else:
+            for c in range(NUM_CLASSES):
+                mask = (labels == c)
+                # Center the output relative to the precomputed mean
+                centered = output[:, mask] - pre_computed_mean[c]
+                cov_matrix += centered.T @ centered
+            
             centered = result - pre_computed_mean.reshape(-1, 1) # Convert from (20,) to (20, 1) to allow broadcasting
             cov_matrix += centered @ centered.T
             # for c in range(NUM_CLASSES):
