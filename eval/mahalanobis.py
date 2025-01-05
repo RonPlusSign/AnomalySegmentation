@@ -150,10 +150,8 @@ def main():
         with torch.no_grad():
             if args.model == "bisenet":
                 result = F.softmax(model(images)[0].squeeze(0), dim=0)
-                output = result.data.cpu().numpy()
             else: #TODO check ENet output
                 result = F.softmax(model(images).squeeze(0), dim=0)
-                output = result.data.cpu().numpy()
         
         # If mean is not computed, accumulate sum and count per class
         if not mean_is_computed:
@@ -163,17 +161,18 @@ def main():
                 mask = (labels == c).squeeze()
                 
                 # Accumulate the sum of the output for class `c`
-                sum_per_class[c] += np.sum(output[:, mask])
+                sum_per_class[c] += torch.sum(result[:, mask], dim=1)
                 
                 # Accumulate the count of pixels for class `c`
                 pixel_count_per_class[c] += torch.sum(mask)
 
         else:
             for c in range(NUM_CLASSES):
-                mask = (labels == c)
+                # Create a mask for the pixels corresponding to class `c`
+                mask = (labels == c).squeeze()
                 # Center the output relative to the precomputed mean
                 centered = output[:, mask] - pre_computed_mean[c]
-                cov_matrix += centered.T @ centered
+                cov_matrix += centered @ centered.T
             
             centered = result - pre_computed_mean.reshape(-1, 1) # Convert from (20,) to (20, 1) to allow broadcasting
             cov_matrix += centered @ centered.T
@@ -185,21 +184,17 @@ def main():
 
     # After processing all images, calculate the mean per class
     if not mean_is_computed:
-        mean = sum_dataset / (num_images * 512 * 1024) # Normalize by the number of pixels
+        for c in range(NUM_CLASSES):
+            if pixel_count_per_class[c] > 0:
+                sum_per_class[c] /= pixel_count_per_class[c]
         
-        # for c in range(NUM_CLASSES):
-            # if pixel_count_per_class[c] > 0:
-            #     # Divide the sum for class 'c' by the count of pixels for class 'c'
-            #     #mean[c] = sum_dataset[c] / pixel_count_per_class[c]
-            #     mean[c] = sum_dataset[c] / num_images
-        
-        print(f"Mean per class: {mean.shape}")
-        np.save(f"{args.loadDir}/save/mean_cityscapes_{args.model}.npy", mean)
+        print(f"Mean per class: {sum_per_class.shape}")
+        np.save(f"{args.loadDir}/save/mean_cityscapes_{args.model}.npy", sum_per_class.data.cpu().numpy())
         print(f"Mean output saved as '{args.loadDir}/save/mean_cityscapes_{args.model}.npy'")
     else: 
         cov_matrix /= (512 * 1024 * num_images) # Normalize by the number of pixels
         print(f"Covariance matrix: {cov_matrix.shape}")
-        np.save(f"{args.loadDir}/save/cov_matrix_{args.model}.npy", cov_matrix.data.cpu().numpy())
+        np.save(f"{args.loadDir}/save/cov_cityscapes_{args.model}.npy", cov_matrix.data.cpu().numpy())
         print(f"Covariance matrice saved as '{args.loadDir}/save/cov_matrix_{args.model}.npy'")
  
 
