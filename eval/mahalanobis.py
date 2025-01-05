@@ -150,9 +150,9 @@ def main():
         output = None
         with torch.no_grad():
             if args.model == "bisenet":
-                result = F.softmax(model(images)[0].squeeze(0), dim=0)
+                result = model(images)[0].squeeze(0)
             else: #TODO check ENet output
-                result = F.softmax(model(images).squeeze(0), dim=0)
+                result = model(images).squeeze(0)
         
         # If mean is not computed, accumulate sum and count per class
         if not mean_is_computed:
@@ -170,12 +170,15 @@ def main():
         else:
             for c in range(NUM_CLASSES):
                 # Create a mask for the pixels corresponding to class `c`
+
                 mask = (labels == c).squeeze()
                 # Center the output relative to the precomputed mean
+
                 centered = result[:, mask] - pre_computed_mean[c].unsqueeze(1)
+                print("centered", centered)
                 cov_matrix += centered @ centered.T
             
-        num_images += images.size(0)
+        num_images += 1
 
     # After processing all images, calculate the mean per class
     if not mean_is_computed:
@@ -188,7 +191,7 @@ def main():
         print(f"Mean output saved as '{args.loadDir}/save/mean_cityscapes_{args.model}.npy'")
     else: 
         print("cov_matrix", cov_matrix)
-        cov_matrix /= torch.sum(pixel_count_per_class) # Normalize by the number of pixels
+        cov_matrix /= (num_images*512*1024)# Normalize by the number of pixels
         print(f"Covariance matrix: {cov_matrix.shape}")
         print("cov_matrix", cov_matrix)
         np.save(f"{args.loadDir}/save/cov_cityscapes_{args.model}.npy", cov_matrix.data.cpu().numpy())
