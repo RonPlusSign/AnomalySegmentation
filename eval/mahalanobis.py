@@ -171,15 +171,9 @@ def main():
                 # Create a mask for the pixels corresponding to class `c`
                 mask = (labels == c).squeeze()
                 # Center the output relative to the precomputed mean
-                centered = output[:, mask] - pre_computed_mean[c]
+                centered = result[:, mask] - pre_computed_mean[c]
                 cov_matrix += centered @ centered.T
             
-            centered = result - pre_computed_mean.reshape(-1, 1) # Convert from (20,) to (20, 1) to allow broadcasting
-            cov_matrix += centered @ centered.T
-            # for c in range(NUM_CLASSES):
-            #     # Center the output relative to the precomputed mean
-            #     centered = result[c] - pre_computed_mean[c]
-            #     cov_matrix += centered.T @ centered
         num_images += images.size(0)
 
     # After processing all images, calculate the mean per class
@@ -192,11 +186,10 @@ def main():
         np.save(f"{args.loadDir}/save/mean_cityscapes_{args.model}.npy", sum_per_class.data.cpu().numpy())
         print(f"Mean output saved as '{args.loadDir}/save/mean_cityscapes_{args.model}.npy'")
     else: 
-        cov_matrix /= (512 * 1024 * num_images) # Normalize by the number of pixels
+        cov_matrix /= torch.sum(pixel_count_per_class) # Normalize by the number of pixels
         print(f"Covariance matrix: {cov_matrix.shape}")
         np.save(f"{args.loadDir}/save/cov_cityscapes_{args.model}.npy", cov_matrix.data.cpu().numpy())
         print(f"Covariance matrice saved as '{args.loadDir}/save/cov_matrix_{args.model}.npy'")
- 
 
 if __name__ == '__main__':
     main()
