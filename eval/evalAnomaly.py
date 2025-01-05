@@ -81,6 +81,16 @@ def mahalanobis_score(f_x, means, covariance_inv):
             max_distance = score
     return max_distance
 
+def mahalanobis_distance_score(output, centers, inv_cov_matrix, layer=16):
+    """
+    Computes Mahalanobis distances of a batch, when the centers and covariance
+    matrix are already computed, without preprocessing.
+    """
+    num_classes = len(centers)
+    zero_m_feat = output - center[: , None, None ] #[output - centers[c] for c in range(num_classes)]
+    zero_m_feat = torch.stack(zero_m_feat)
+    distances = -torch.matmul(zero_m_feat, inv_cov_matrix).matmul(zero_m_feat.transpose(1,2)).diagonal()
+    return(distances.max(1).values)
 
 # def mahalanobis_distance_per_pixel(f_x_pixel, mean, covariance_inv):
 #     """
