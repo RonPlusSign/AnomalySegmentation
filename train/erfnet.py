@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.nn.init as init
 import torch.nn.functional as F
 
-from losses.isomax_plus_loss import IsoMaxPlusLossFirstPart
+from train.losses.isomax_plus_loss import IsoMaxPlusLossFirstPart
 
 class DownsamplerBlock (nn.Module):
     def __init__(self, ninput, noutput):

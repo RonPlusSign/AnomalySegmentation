@@ -16,10 +16,14 @@ from temperature_scaling import ModelWithTemperature
 import torch.nn.functional as F # aggiunto io 
 from torchvision.transforms import Compose, ToTensor, Normalize, Resize
 import sys
+import importlib
 
-from ..train.erfnet import ERFNet
-from ..train.enet import ENet
-from ..train.bisenet import BiSeNetV1
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+ERFNet = importlib.import_module('train.erfnet').ERFNet
+ENet = importlib.import_module('train.enet').ENet
+BiSeNetV1 = importlib.import_module('train.bisenet').BiSeNetV1
+
 
 seed = 42
 
