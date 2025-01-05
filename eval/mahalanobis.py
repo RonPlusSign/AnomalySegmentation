@@ -187,8 +187,10 @@ def main():
         np.save(f"{args.loadDir}/save/mean_cityscapes_{args.model}.npy", sum_per_class.data.cpu().numpy())
         print(f"Mean output saved as '{args.loadDir}/save/mean_cityscapes_{args.model}.npy'")
     else: 
+        print("cov_matrix", cov_matrix)
         cov_matrix /= torch.sum(pixel_count_per_class) # Normalize by the number of pixels
         print(f"Covariance matrix: {cov_matrix.shape}")
+        print("cov_matrix", cov_matrix)
         np.save(f"{args.loadDir}/save/cov_cityscapes_{args.model}.npy", cov_matrix.data.cpu().numpy())
         print(f"Covariance matrice saved as '{args.loadDir}/save/cov_matrix_{args.model}.npy'")
 
