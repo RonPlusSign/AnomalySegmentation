@@ -134,13 +134,13 @@ def main():
     print ("Model and weights LOADED successfully")
     model.eval()
     
-    # Track sum and count for mean
-    sum_dataset = np.zeros((20,), dtype=np.float32)  # a value for each class
-    # pixel_count_per_class = np.zeros(NUM_CLASSES)
 
     # Covariance matrices
     cov_matrix = torch.zeros((20, 20), dtype=torch.float32, device='cuda')
-    num_images = 0
+    num_images = 0  
+
+    sum_per_class = np.zeros((NUM_CLASSES, NUM_CLASSES), dtype=np.float32)
+    pixel_count_per_class = np.zeros((NUM_CLASSES,), dtype=np.int32)
 
     for images, labels in tqdm(loader):
         if not args.cpu:
@@ -156,19 +156,25 @@ def main():
                 result = F.softmax(model(images).squeeze(0), dim=0)
                 output = result.data.cpu().numpy()
             result = result.reshape(20, -1) # Convert from (20, 512, 1024) to (20, 512*1024)
-
+        
         # If mean is not computed, accumulate sum and count per class
         if not mean_is_computed:
-            # Accumulate sum for each class
-            sum_dataset += np.sum(output, axis=(1, 2))
-            
-            # for c in range(NUM_CLASSES):
-                # Add the output for class 'c' to the sum
-                # sum_dataset[c] += output[c]
-                
-                # Count how many pixels of this class are present in the labels
-                # Count where the label equals the current class 'c'
-                # pixel_count_per_class[c] += np.sum(labels.cpu().numpy() == c).item()
+            # Accumulate the sum of the output for each class
+            for b in range(args.batch_size):
+                for c in range(NUM_CLASSES):
+                    # Create a mask for the pixels corresponding to class `c`
+                    mask = (labels[b] == c)
+                    print(f"Mask shape: {mask.shape}")
+                    print(f"Output shape: {output.shape}")
+                    print(f"output[b, :, mask] shape: {output[b, :, mask].shape}")
+                    
+                    # Accumulate the sum of the output for class `c`
+                    sum_per_class[c] += np.sum(output[b, :, mask])
+                    print(f"Sum per class shape: {sum_per_class[c].shape}")
+
+                    # Accumulate the count of pixels for class `c`
+                    pixel_count_per_class[c] += np.sum(mask)
+
         else:
             centered = result - pre_computed_mean.reshape(-1, 1) # Convert from (20,) to (20, 1) to allow broadcasting
             cov_matrix += centered @ centered.T
