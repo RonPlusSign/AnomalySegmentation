@@ -112,7 +112,7 @@ class Decoder (nn.Module):
     def __init__(self, num_classes, use_isomaxplus = False):
         super().__init__()
         if use_isomaxplus:
-            self.loss_first_part = IsoMaxPlusLossFirstPart(16, num_classes)
+            self.loss_first_part = IsoMaxPlusLossFirstPart(num_classes, num_classes)
 
         self.layers = nn.ModuleList()
 
@@ -124,10 +124,10 @@ class Decoder (nn.Module):
         self.layers.append(non_bottleneck_1d(16, 0, 1))
         self.layers.append(non_bottleneck_1d(16, 0, 1))
         
-        if use_isomaxplus:
-            self.output_conv = nn.Conv2d(16, self.loss_first_part.num_features, kernel_size=1)
-        else:
-            self.output_conv = nn.ConvTranspose2d(16, num_classes, 2, stride=2, padding=0, output_padding=0, bias=True)
+        #if use_isomaxplus:
+            #self.output_conv = nn.Conv2d(16, self.loss_first_part.num_features, kernel_size=1)
+        #else:
+        self.output_conv = nn.ConvTranspose2d(16, num_classes, 2, stride=2, padding=0, output_padding=0, bias=True)
 
 
     def forward(self, input):
