@@ -220,9 +220,13 @@ def train(args, model, enc=False):
         for param in model.parameters():
             param.requires_grad = False
         
-        if args.model == "erfnet" or args.model == "erfnet_isomaxplus": 
+        if args.model == "erfnet": 
             for param in model.module.decoder.output_conv.parameters():
-                param.requires_grad = True         
+                param.requires_grad = True   
+        elif args.model == "erfnet_isomaxplus":
+            #TODO check if parameters are correctly set
+            for param in model.parameters():
+                print(param)
         elif args.model == "bisenet":
             for param in model.module.conv_out.parameters():
                 param.requires_grad = True
