@@ -128,20 +128,44 @@ def mahalanobis_distance_score(output, means, cov_inv):
 
     return M_scores
     """
-    # Primo passo: Reshape e calcolo della differenza
-    output_reshaped = output.permute(1, 2, 0).reshape(-1, output.size(0))  # (512*1024, 20)
-    
-    # Calcola la differenza tra output e means per tutte le classi
-    output_centered = output_reshaped.unsqueeze(1) - means.unsqueeze(0)  # (512*1024, 20, 20)
-    
-    # Calcola il prodotto Mahalanobis per tutte le classi contemporaneamente
-    centered = output_centered.reshape(-1, NUM_CLASSES)  # (512*1024, 20)
-    scores = -torch.sum(centered @ cov_inv * centered, dim=1)  # (512*1024*20 10485760)
-    print("scores", scores)
-    # Trova il massimo punteggio per ogni pixel
-    M_scores = scores.max(dim=1)[0].reshape(output.size(1), output.size(2))  # (512, 1024)
+    num_features, height, width = output.shape
 
-    print(f"Mahalanobis score: {M_scores.shape}")
+    # Trasponi e rimodella l'output per gestire i pixel in batch
+    output_flat = output.view(num_features, -1).T  # (height * width, num_features)
+
+    # Espandi le medie per il calcolo batch
+    means_expanded = means.unsqueeze(1)  # (num_classes, 1, num_features)
+    output_expanded = output_flat.unsqueeze(0)  # (1, height * width, num_features)
+
+    # Calcola la differenza (broadcasting)
+    centered = output_expanded - means_expanded  # (num_classes, height * width, num_features)
+
+    # Calcola lo score di Mahalanobis
+    scores = -torch.einsum(
+        'npi,ij,npj->np',
+        centered, cov_inv, centered
+    )  # (num_classes, height * width)
+
+    # Trova il massimo score per ogni pixel
+    M_scores_flat = scores.max(dim=0).values  # (height * width)
+
+    # Rimodella in (height, width)
+    M_scores = M_scores_flat.view(height, width)
+
+    # Verifica un pixel specifico
+    i, j = 100, 200
+    f_x_manual = output[:, i, j]
+    scores_manual = []
+    for c in range(NUM_CLASSES):
+        mean_c = means[c]
+        centered = f_x_manual - mean_c
+        score_c = -torch.matmul(centered.T, torch.matmul(cov_inv, centered))
+        scores_manual.append(score_c)
+    manual_max = max(scores_manual)
+
+    assert torch.isclose(M_scores[i, j], manual_max), "L'ordine non è mantenuto!"
+    print("Ordine verificato e corretto!")
+    
     return M_scores
 
 
