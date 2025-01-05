@@ -14,11 +14,12 @@ from sklearn.metrics import roc_auc_score, roc_curve, auc, precision_recall_curv
 
 from icecream import ic
 from temperature_scaling import ModelWithTemperature
-import torch.nn.functional as F # aggiunto io 
+import torch.nn.functional as F 
 from torchvision.transforms import Compose, ToTensor, Normalize, Resize
 from enet import ENet
 from bisenet import BiSeNetV1
 import sys
+from tqdm import tqdm
 seed = 42
 
 input_transform = Compose(
@@ -178,7 +179,7 @@ def main():
         means = torch.from_numpy(means).to(device)
         cov_inv = torch.from_numpy(cov_inv).to(device)
     
-    for path in glob.glob(os.path.expanduser(str(args.input))):
+    for path in tqdm(glob.glob(os.path.expanduser(str(args.input)))):
         images = input_transform((Image.open(path).convert('RGB'))).unsqueeze(0).float().to(device)
         
         with torch.no_grad():
