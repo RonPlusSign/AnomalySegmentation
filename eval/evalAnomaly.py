@@ -252,7 +252,7 @@ def main():
                 anomaly_result = anomaly_result.data.cpu().numpy()
             elif(method == "Mahalanobis"):
                 # Compute Mahalanobis distance
-                anomaly_result = mahalanobis_distance_score(F.softmax(result, dim=0), means, cov_inv)
+                anomaly_result = mahalanobis_distance_score(result, means, cov_inv)
                 anomaly_result = anomaly_result.data.cpu().numpy()
                 print(f"Mahalanobis score: {anomaly_result}")
             else:
