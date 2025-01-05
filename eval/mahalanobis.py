@@ -138,8 +138,8 @@ def main():
     cov_matrix = torch.zeros((20, 20), dtype=torch.float32, device='cuda')
     num_images = 0  
 
-    sum_per_class = torch.zeros((NUM_CLASSES, NUM_CLASSES), dtype=torch.float32, device=result.device)
-    pixel_count_per_class = torch.zeros(NUM_CLASSES, dtype=torch.int32, device=result.device)
+    sum_per_class = torch.zeros((NUM_CLASSES, NUM_CLASSES), dtype=torch.float32, device="cpu" if args.cpu else 'cuda')
+    pixel_count_per_class = torch.zeros(NUM_CLASSES, dtype=torch.int32, device="cpu" if args.cpu else 'cuda')
 
 
     for images, labels in tqdm(loader):
