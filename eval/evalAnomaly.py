@@ -201,8 +201,8 @@ def main():
 
     if method == "Mahalanobis":
         # Load mean and covariance matrices from "save" folder
-        means = np.load("/content/AnomalySegmentation/save/mean_cityscapes_erfnet.npy")
-        cov = np.load("/content/AnomalySegmentation/save/cov_matrix_erfnet.npy")
+        means = np.load("/content/AnomalySegmentation/save/mean_cityscapes_erfnet_20_elements.npy")
+        cov = np.load("/content/AnomalySegmentation/save/cov_matrix_erfnet_20x20.npy")
         cov_inv = np.linalg.inv(cov)
         print("mean shape: ", means.shape)
         print("cov shape: ", cov.shape)
