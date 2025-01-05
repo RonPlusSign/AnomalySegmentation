@@ -97,6 +97,8 @@ def mahalanobis_distance_score(output, means, cov_inv):
     # Trova il massimo tra tutti gli score
     M_scores = scores.max(dim=1)[0].reshape(512, 1024)
 
+    print(f"Mahalanobis score: {M_scores.shape}")
+
     return M_scores
 
 
