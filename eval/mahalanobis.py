@@ -160,17 +160,13 @@ def main():
             # Accumulate the sum of the output for each class
             for c in range(NUM_CLASSES):
                 # Create a mask for the pixels corresponding to class `c`
-                mask = (labels == c)
-                print(f"Mask shape: {mask.shape}")
-                print(f"Output shape: {output.shape}")
-                print(f"output[b, :, mask] shape: {output[:, mask].shape}")
+                mask = (labels == c).squeeze()
                 
                 # Accumulate the sum of the output for class `c`
                 sum_per_class[c] += np.sum(output[:, mask])
-                print(f"Sum per class shape: {sum_per_class[c].shape}")
-
+                
                 # Accumulate the count of pixels for class `c`
-                pixel_count_per_class[c] += np.sum(mask)
+                pixel_count_per_class[c] += torch.sum(mask)
 
         else:
             for c in range(NUM_CLASSES):
