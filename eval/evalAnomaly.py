@@ -47,52 +47,40 @@ NUM_CLASSES = 20
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = True
 
-# def mahalanobis_distance(f_x, mean, covariance_inv):
-#     """
-#     Compute the Mahalanobis distance between a sample f_x and a class mean with the inverse covariance matrix.
-#     f_x: test sample feature vector (numpy array of shape (20, 512, 1024))
-#     mean: class mean (vector of shape (20))
-#     covariance_inv: inverse of covariance matrix (numpy array of shape (20, 20))
-    
-#     Returns the Mahalanobis distance (scalar)
-#     """
-#     print(f"mean shape: {mean.shape}")
-#     print(f"covariance_inv shape: {covariance_inv.shape}")
-#     print(f"f_x shape: {f_x.shape}")
-#     diff = f_x.reshape(20, -1) - mean # Reshape to (20, 512*1024) because covariance is 20x20
-#     return diff.T @ (covariance_inv @ diff) # FIXME: This allocates too much memory and doesn't work
-
-# def mahalanobis_score(f_x, means, covariance_inv):
-#     """
-#     Compute the Mahalanobis distance-based confidence score for a test sample.
-    
-#     f_x: test sample feature vector (numpy array of shape (20, 512, 1024))
-#     means: class means (numpy array of shape (20))
-#     covariance_inv: inverse of covariance matrix (numpy array of shape (20, 20))
-    
-#     Returns the confidence score (scalar)
-#     """
-#     max_distance = float('-inf')  # Start with a very small number
-#     for c in range(means.shape[0]):  # Loop over each class
-#         distance = mahalanobis_distance(f_x, means, covariance_inv)
-#         print(f"Distance for class {c}: {distance}") 
-#         score = -distance
-#         if score > max_distance:
-#             max_distance = score
-#     return max_distance
-
-
-'''def mahalanobis_distance_per_pixel(f_x_pixel, mean, covariance_inv):
+def mahalanobis_distance(f_x, mean, covariance_inv):
     """
-    Compute the Mahalanobis distance for a single pixel's feature vector.
-    f_x_pixel: feature vector for a single pixel (numpy array of shape (20,))
-    mean: class mean (numpy array of shape (20,))
+    Compute the Mahalanobis distance between a sample f_x and a class mean with the inverse covariance matrix.
+    f_x: test sample feature vector (numpy array of shape (20, 512, 1024))
+    mean: class mean (vector of shape (20))
     covariance_inv: inverse of covariance matrix (numpy array of shape (20, 20))
     
-    Returns the Mahalanobis distance (scalar).
+    Returns the Mahalanobis distance (scalar)
     """
-    diff = f_x_pixel - mean  # Difference between pixel feature and class mean
-    return diff.T @ covariance_inv @ diff  # Mahalanobis distance'''
+    print(f"mean shape: {mean.shape}")
+    print(f"covariance_inv shape: {covariance_inv.shape}")
+    print(f"f_x shape: {f_x.shape}")
+    diff = f_x.reshape(20, -1) - mean # Reshape to (20, 512*1024) because covariance is 20x20
+    return diff.T @ (covariance_inv @ diff) # FIXME: This allocates too much memory and doesn't work
+
+def mahalanobis_score(f_x, means, covariance_inv):
+    """
+    Compute the Mahalanobis distance-based confidence score for a test sample.
+    
+    f_x: test sample feature vector (numpy array of shape (20, 512, 1024))
+    means: class means (numpy array of shape (20))
+    covariance_inv: inverse of covariance matrix (numpy array of shape (20, 20))
+    
+    Returns the confidence score (scalar)
+    """
+    max_distance = float('-inf')  # Start with a very small number
+    for c in range(means.shape[0]):  # Loop over each class
+        distance = mahalanobis_distance(f_x, means, covariance_inv)
+        print(f"Distance for class {c}: {distance}") 
+        score = -distance
+        if score > max_distance:
+            max_distance = score
+    return max_distance
+
 def mahalanobis_distance_score(output, centers, inv_cov_matrix, layer=16):
     """
     Computes Mahalanobis distances of a batch, when the centers and covariance
@@ -104,32 +92,44 @@ def mahalanobis_distance_score(output, centers, inv_cov_matrix, layer=16):
     distances = -torch.matmul(zero_m_feat, inv_cov_matrix).matmul(zero_m_feat.transpose(1,2)).diagonal()
     return(distances.max(1).values)
 
-
-'''def mahalanobis_score(f_x, means, covariance_inv):
-    """
-    Compute the Mahalanobis distance-based confidence score for a test sample (image).
+# def mahalanobis_distance_per_pixel(f_x_pixel, mean, covariance_inv):
+#     """
+#     Compute the Mahalanobis distance for a single pixel's feature vector.
+#     f_x_pixel: feature vector for a single pixel (numpy array of shape (20,))
+#     mean: class mean (numpy array of shape (20,))
+#     covariance_inv: inverse of covariance matrix (numpy array of shape (20, 20))
     
-    f_x: test sample feature vector (numpy array of shape (20, 512, 1024))
-    means: class means (numpy array of shape (20, 20)) - one mean vector per class
-    covariance_inv: inverse of covariance matrix (numpy array of shape (20, 20))
+#     Returns the Mahalanobis distance (scalar).
+#     """
+#     diff = f_x_pixel - mean  # Difference between pixel feature and class mean
+#     return diff.T @ covariance_inv @ diff  # Mahalanobis distance
+
+
+# def mahalanobis_score(f_x, means, covariance_inv):
+#     """
+#     Compute the Mahalanobis distance-based confidence score for a test sample (image).
     
-    Returns the confidence score (scalar).
-    """
-    C, H, W = f_x.shape[0], f_x.shape[1], f_x.shape[2]  # Classes, height, width
-    max_scores = np.full((H, W), float('-inf'))  # Max scores for each pixel
+#     f_x: test sample feature vector (numpy array of shape (20, 512, 1024))
+#     means: class means (numpy array of shape (20, 20)) - one mean vector per class
+#     covariance_inv: inverse of covariance matrix (numpy array of shape (20, 20))
+    
+#     Returns the confidence score (scalar).
+#     """
+#     C, H, W = f_x.shape[0], f_x.shape[1], f_x.shape[2]  # Classes, height, width
+#     max_scores = np.full((H, W), float('-inf'))  # Max scores for each pixel
 
-    for c in range(means.shape[0]):  # Loop over each class (C = 20)
-        mean = means[c]  # Mean vector for class c (shape: (20,))
-        for h in range(H):
-            for w in range(W):
-                f_x_pixel = f_x[:, h, w]  # Feature vector for a single pixel (shape: (20,))
-                distance = mahalanobis_distance_per_pixel(f_x_pixel, mean, covariance_inv)
-                score = -distance  # Convert distance to confidence score
-                if score > max_scores[h, w]:  # Keep the max score for each pixel
-                    max_scores[h, w] = score
+#     for c in range(means.shape[0]):  # Loop over each class (C = 20)
+#         mean = means[c]  # Mean vector for class c (shape: (20,))
+#         for h in range(H):
+#             for w in range(W):
+#                 f_x_pixel = f_x[:, h, w]  # Feature vector for a single pixel (shape: (20,))
+#                 distance = mahalanobis_distance_per_pixel(f_x_pixel, mean, covariance_inv)
+#                 score = -distance  # Convert distance to confidence score
+#                 if score > max_scores[h, w]:  # Keep the max score for each pixel
+#                     max_scores[h, w] = score
 
-    # Aggregate the scores over all pixels (e.g., average, sum, or max)
-    return np.mean(max_scores)  # Return the mean confidence score'''
+#     # Aggregate the scores over all pixels (e.g., average, sum, or max)
+#     return np.mean(max_scores)  # Return the mean confidence score
 
 
 def main():
