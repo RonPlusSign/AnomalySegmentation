@@ -109,9 +109,11 @@ class UpsamplerBlock (nn.Module):
         return F.relu(output)
 
 class Decoder (nn.Module):
-    def __init__(self, num_classes, loss_first_part=None):
+    def __init__(self, num_classes, use_isomaxplus = False):
         super().__init__()
-        self.loss_first_part = loss_first_part
+        if use_isomaxplus:
+            self.loss_first_part = IsoMaxPlusLossFirstPart(16, num_classes)
+
         self.layers = nn.ModuleList()
 
         self.layers.append(UpsamplerBlock(128,64))
@@ -122,8 +124,8 @@ class Decoder (nn.Module):
         self.layers.append(non_bottleneck_1d(16, 0, 1))
         self.layers.append(non_bottleneck_1d(16, 0, 1))
         
-        if self.loss_first_part is not None:
-            self.output_conv = nn.Conv2d(16, loss_first_part.num_features, kernel_size=1)
+        if use_isomaxplus:
+            self.output_conv = nn.Conv2d(16, self.loss_first_part.num_features, kernel_size=1)
         else:
             self.output_conv = nn.ConvTranspose2d(16, num_classes, 2, stride=2, padding=0, output_padding=0, bias=True)
 
@@ -135,23 +137,23 @@ class Decoder (nn.Module):
 
         output = self.output_conv(output)
 
-        # Apply upsampling to match the target resolution (512x1024)
-        output = F.interpolate(output, size=(512, 1024), mode='bilinear', align_corners=True)
-
         if self.loss_first_part is not None:
-            output = self.loss_first_part(output)  # Apply IsoMaxPlusLossFirstPart
+            # Apply upsampling to match the target resolution (512x1024)
+            output = F.interpolate(output, size=(512, 1024), mode='bilinear', align_corners=True)
+            # Apply IsoMaxPlusLossFirstPart
+            output = self.loss_first_part(output)
         return output
 
 #ERFNet
 class ERFNet(nn.Module):
-    def __init__(self, num_classes, encoder=None, loss_first_part=None):  #use encoder to pass pretrained encoder
+    def __init__(self, num_classes, encoder=None, use_isomaxplus = False):  #use encoder to pass pretrained encoder
         super().__init__()
 
         if (encoder == None):
             self.encoder = Encoder(num_classes)
         else:
             self.encoder = encoder
-        self.decoder = Decoder(num_classes, loss_first_part)
+        self.decoder = Decoder(num_classes, use_isomaxplus)
 
     def forward(self, input, only_encode=False):
         if only_encode:

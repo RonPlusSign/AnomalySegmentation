@@ -90,8 +90,7 @@ def main():
     if args.model == "erfnet":
         model = ERFNet(NUM_CLASSES)
     elif args.model == "erfnet_isomaxplus":
-        loss_first_part = IsoMaxPlusLossFirstPart(16, 20)
-        model = ERFNet(NUM_CLASSES, loss_first_part=loss_first_part)
+        model = ERFNet(NUM_CLASSES, use_isomaxplus=True)
     elif args.model =="enet":
         model = ENet(NUM_CLASSES)
     elif args.model == "bisenet":

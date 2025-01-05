@@ -481,8 +481,7 @@ def main(args):
     if args.model == "erfnet":
         model = model_file.ERFNet(NUM_CLASSES)
     elif args.model == "erfnet_isomaxplus":
-        loss_first_part = IsoMaxPlusLossFirstPart(16, 20)
-        model = model_file.ERFNet(NUM_CLASSES, loss_first_part=loss_first_part)
+        model = model_file.ERFNet(NUM_CLASSES, use_isomaxplus=True)
     elif args.model == "bisenet":
         model = model_file.BiSeNetV1(NUM_CLASSES)
     elif args.model == "enet":
