@@ -172,7 +172,7 @@ def main():
                 # Create a mask for the pixels corresponding to class `c`
                 mask = (labels == c).squeeze()
                 # Center the output relative to the precomputed mean
-                centered = result[:, mask] - pre_computed_mean[c]
+                centered = result[:, mask] - pre_computed_mean[c].unsqueeze(1)
                 cov_matrix += centered @ centered.T
             
         num_images += images.size(0)
