@@ -81,6 +81,7 @@ def mahalanobis_distance_score(output, means, cov_inv):
 
     return M_scores
     """
+    """
     # Inizializza il risultato finale per i punteggi
     M_scores = torch.empty(512, 1024, device=output.device)  # Uno score per ogni pixel
 
@@ -100,6 +101,31 @@ def mahalanobis_distance_score(output, means, cov_inv):
     print(f"Mahalanobis score: {M_scores.shape}")
 
     return M_scores
+    """
+    # Dimensioni input
+    NUM_CLASSES = 20
+
+    # output: (20, 512, 1024) -> le feature per ogni pixel
+    # means: (20, 20) -> le medie per ciascuna classe
+    # cov_inv: (20, 20) -> matrice di covarianza inversa
+
+    # Reshape delle medie per il broadcasting
+    means = means.view(NUM_CLASSES, NUM_CLASSES, 1, 1)  # (20, 20, 1, 1)
+
+    # Calcolo di f(x) - μ_c per tutte le classi e tutti i pixel
+    centered = output.unsqueeze(1) - means  # (20, 20, 512, 1024)
+
+    # Applica la matrice di covarianza inversa
+    cov_centered = torch.einsum('ab,bcde->acde', cov_inv, centered)  # (20, 20, 512, 1024)
+
+    # Prodotto scalare per il termine quadratico
+    quad_form = torch.einsum('bcde,bcde->bde', centered, cov_centered)  # (20, 512, 1024)
+
+    # Trova il massimo score per ogni pixel
+    M_scores = -quad_form.max(dim=0).values  # (512, 1024)
+
+    return M_scores
+
 
 
 def main():
