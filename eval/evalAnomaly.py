@@ -102,6 +102,8 @@ def mahalanobis_distance_score(output, means, cov_inv):
 
     return M_scores
     """
+
+    """
     # Dimensioni input
     NUM_CLASSES = 20
 
@@ -125,6 +127,21 @@ def mahalanobis_distance_score(output, means, cov_inv):
     M_scores = -quad_form.max(dim=0).values  # (512, 1024)
 
     return M_scores
+    """
+    # Primo passo: Reshape e calcolo della differenza
+    output_reshaped = output.permute(1, 2, 0).reshape(-1, output.size(0))  # (512*1024, 20)
+    
+    # Calcola la differenza tra output e means per tutte le classi
+    output_centered = output_reshaped.unsqueeze(1) - means.unsqueeze(0)  # (512*1024, 20, 20)
+    
+    # Calcola il prodotto Mahalanobis per tutte le classi contemporaneamente
+    centered = output_centered.reshape(-1, NUM_CLASSES)  # (512*1024, 20)
+    scores = -torch.sum(centered @ cov_inv * centered, dim=1)  # (512*1024,)
+    
+    # Trova il massimo punteggio per ogni pixel
+    M_scores = scores.max(dim=1)[0].reshape(output.size(1), output.size(2))  # (512, 1024)
+
+    print(f"Mahalanobis score: {M_scores.shape}")
 
 
 
