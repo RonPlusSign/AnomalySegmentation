@@ -1,7 +1,7 @@
 from PIL import Image, ImageOps
 import random
 from transform import Relabel, ToLabel, Colorize
-from torchvision.transforms import Compose, CenterCrop, Normalize, Resize, Pad, RandomHorizontalFlip, ToTensor, ext_transforms, RandomResizedCrop, ColorJitter
+from torchvision.transforms import Compose, Resize, RandomHorizontalFlip, ToTensor, RandomResizedCrop, ColorJitter
 import cv2
 import numpy as np
 import PIL.ImageEnhance as ImageEnhance
