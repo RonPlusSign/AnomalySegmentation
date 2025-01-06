@@ -408,27 +408,6 @@ def train(args, model, enc=False):
                 'optimizer' : optimizer.state_dict(),
             }, is_best, filenameCheckpoint, filenameBest)
 
-        """
-        #SAVE MODEL AFTER EPOCH
-        if (enc):
-            filename = f'{savedir}/model_encoder-{epoch:03}.pth'
-            filenamebest = f'{savedir}/model_encoder_best.pth'
-        else:
-            filename = f'{savedir}/model-{epoch:03}.pth'
-            filenamebest = f'{savedir}/model_best.pth'
-        if args.epochs_save > 0 and step > 0 and step % args.epochs_save == 0:
-            torch.save(model.state_dict(), filename)
-            print(f'save: {filename} (epoch: {epoch})')
-        if (is_best):
-            torch.save(model.state_dict(), filenamebest)
-            print(f'save: {filenamebest} (epoch: {epoch})')
-            if (not enc):
-                with open(savedir + "/best.txt", "w") as myfile:
-                    myfile.write("Best epoch is %d, with Val-IoU= %.4f" % (epoch, iouVal))   
-            else:
-                with open(savedir + "/best_encoder.txt", "w") as myfile:
-                    myfile.write("Best epoch is %d, with Val-IoU= %.4f" % (epoch, iouVal))
-        """
         #SAVE MODEL AFTER EPOCH
         if (enc):
             filename = f'{savedir}/model_encoder-{epoch:03}.pth'
@@ -437,7 +416,7 @@ def train(args, model, enc=False):
             filename = f'{savedir}/model-{epoch:03}.pth'
             filenamebest = f'{savedir}/model_best.pth'
 
-        # Funzione di utilità per salvare lo stato del modello
+        # save model state
         def save_model(model, filename, save_isomax=False):
             # Salva solo lo stato del modello
             state = {'state_dict': model.state_dict()}
@@ -445,7 +424,6 @@ def train(args, model, enc=False):
                 state['loss_first_part_state_dict'] = model.module.decoder.loss_first_part.state_dict()
             torch.save(state, filename)
 
-        # Salva il modello a intervalli specificati
         if args.epochs_save > 0 and step > 0 and step % args.epochs_save == 0:
             if args.model == "erfnet_isomaxplus":
                 save_model(model, filename, save_isomax=True)
@@ -453,7 +431,7 @@ def train(args, model, enc=False):
                 save_model(model, filename)
             print(f'save: {filename} (epoch: {epoch})')
 
-        # Salva il miglior modello
+        # save best model
         if (is_best):
             if args.model == "erfnet_isomaxplus":
                 save_model(model, filenamebest, save_isomax=True)
