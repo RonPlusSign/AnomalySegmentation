@@ -78,21 +78,44 @@ class MyCoTransform(object):
 
         return input, target
     
-def calculate_class_weights(dataset, num_classes):
-    # Initialize a histogram for the class labels
-    class_counts = np.zeros(num_classes)
-    
-    # Iterate through the dataset and count occurrences of each label
-    for _, label in dataset:
-        class_counts[label] += 1
+def calculate_class_weights(dataloader, num_classes, c=1.02):
+    """Computes class weights as described in the ENet paper:
 
-    # Calculate the weights as the inverse of the class frequency
-    total_samples = len(dataset)
-    class_weights = total_samples / (num_classes * class_counts)
+        w_class = 1 / (ln(c + p_class)),
+
+    where c is usually 1.02 and p_class is the propensity score of that
+    class:
+
+        propensity_score = freq_class / total_pixels.
+
+    References: https://arxiv.org/abs/1606.02147
+
+    Keyword arguments:
+    - dataloader (``data.Dataloader``): A data loader to iterate over the
+    dataset.
+    - num_classes (``int``): The number of classes.
+    - c (``int``, optional): AN additional hyper-parameter which restricts
+    the interval of values for the weights. Default: 1.02.
+
+    """
+    class_count = 0
+    total = 0
+    for _, label in dataloader:
+        label = label.cpu().numpy()
+
+        # Flatten label
+        flat_label = label.flatten()
+
+        # Sum up the number of pixels of each class and the total pixel
+        # counts for each label
+        class_count += np.bincount(flat_label, minlength=num_classes)
+        total += flat_label.size
     
-    # Convert to a torch tensor
-    class_weights_tensor = torch.tensor(class_weights, dtype=torch.float32)
-    return class_weights_tensor
+    # Compute propensity score and then the weights for each class
+    propensity_score = class_count / total
+    class_weights = 1 / (np.log(c + propensity_score))
+
+    return class_weights
 
 #@torch.compile
 def train(args, model, enc=False):
@@ -155,12 +178,12 @@ def train(args, model, enc=False):
     dataset_train = cityscapes(args.datadir, co_transform, 'train')
     dataset_val = cityscapes(args.datadir, co_transform_val, 'val')
 
-    # Calculate class weights
-    #weight = calculate_class_weights(dataset_train, NUM_CLASSES)
-    #print(f"Class weights: {weight}")
-
     loader = DataLoader(dataset_train, num_workers=args.num_workers, batch_size=args.batch_size, shuffle=True)
     loader_val = DataLoader(dataset_val, num_workers=args.num_workers, batch_size=args.batch_size, shuffle=False)
+
+    # Calculate class weights
+    weight = calculate_class_weights(loader, NUM_CLASSES)
+    print(f"Class weights: {weight}")
 
     if args.cuda:
         weight = weight.cuda()
