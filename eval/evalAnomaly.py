@@ -137,6 +137,40 @@ def main():
         return model
     model = load_my_state_dict(model, torch.load(weightspath, map_location=device))
 
+    def load_my_state_dict(model, state_dict, args, device):  #custom function to load model when not all dict elements
+        own_state = model.state_dict()
+        #print(state_dict.keys())
+        #print(own_state.keys())
+        
+        # Check if the model is 'erfnet_isomaxplus'and load the state dict for IsoMaxPlusLossFirstPart
+        if args.model == "erfnet_isomaxplus" and 'loss_first_part_state_dict' in state_dict:
+            # Get the state dict for IsoMaxPlusLossFirstPart
+            loss_first_part_state_dict = state_dict['loss_first_part_state_dict']
+            # Load the state dict for IsoMaxPlusLossFirstPart
+            if hasattr(model.module.decoder, 'loss_first_part'):
+                model.module.decoder.loss_first_part.load_state_dict(loss_first_part_state_dict)
+            else:
+                raise ValueError("IsoMaxPlusLossFirstPart not found in the model")
+
+        # load the rest of the model
+        for name, param in state_dict.items():
+            if name not in own_state:
+                if name.startswith("module."):
+                    own_state[name.split("module.")[-1]].copy_(param)
+                else:
+                    print(name, " not loaded")
+                    continue
+            else:
+                own_state[name].copy_(param)
+        return model
+
+    # Successivamente, quando carichi i pesi:
+    model = load_my_state_dict(model, torch.load(weightspath, map_location=device), args, device)
+
+
+
+
+
     if(temperature != 0 ):
         model = ModelWithTemperature(model, temperature = temperature)
 

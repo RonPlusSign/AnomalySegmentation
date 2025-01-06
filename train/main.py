@@ -388,14 +388,27 @@ def train(args, model, enc=False):
         else:
             filenameCheckpoint = savedir + '/checkpoint.pth.tar'
             filenameBest = savedir + '/model_best.pth.tar'
-        save_checkpoint({
-            'epoch': epoch + 1,
-            'arch': str(model),
-            'state_dict': model.state_dict(),
-            'best_acc': best_acc,
-            'optimizer' : optimizer.state_dict(),
-        }, is_best, filenameCheckpoint, filenameBest)
+        
+        if args.model == "erfnet_isomaxplus":
+            # save also the loss_first_part state_dict
+            save_checkpoint({
+                'epoch': epoch + 1,
+                'arch': str(model),
+                'state_dict': model.state_dict(),
+                'loss_first_part_state_dict': model.module.decoder.state_dict(),
+                'best_acc': best_acc,
+                'optimizer': optimizer.state_dict(),
+            }, is_best, filenameCheckpoint, filenameBest)
+        else:
+            save_checkpoint({
+                'epoch': epoch + 1,
+                'arch': str(model),
+                'state_dict': model.state_dict(),
+                'best_acc': best_acc,
+                'optimizer' : optimizer.state_dict(),
+            }, is_best, filenameCheckpoint, filenameBest)
 
+        """
         #SAVE MODEL AFTER EPOCH
         if (enc):
             filename = f'{savedir}/model_encoder-{epoch:03}.pth'
@@ -414,7 +427,46 @@ def train(args, model, enc=False):
                     myfile.write("Best epoch is %d, with Val-IoU= %.4f" % (epoch, iouVal))   
             else:
                 with open(savedir + "/best_encoder.txt", "w") as myfile:
-                    myfile.write("Best epoch is %d, with Val-IoU= %.4f" % (epoch, iouVal))           
+                    myfile.write("Best epoch is %d, with Val-IoU= %.4f" % (epoch, iouVal))
+        """
+        #SAVE MODEL AFTER EPOCH
+        if (enc):
+            filename = f'{savedir}/model_encoder-{epoch:03}.pth'
+            filenamebest = f'{savedir}/model_encoder_best.pth'
+        else:
+            filename = f'{savedir}/model-{epoch:03}.pth'
+            filenamebest = f'{savedir}/model_best.pth'
+
+        # Funzione di utilità per salvare lo stato del modello
+        def save_model(model, filename, save_isomax=False):
+            # Salva solo lo stato del modello
+            state = {'state_dict': model.state_dict()}
+            if save_isomax and hasattr(model.module.decoder, 'loss_first_part'):
+                state['loss_first_part_state_dict'] = model.module.decoder.loss_first_part.state_dict()
+            torch.save(state, filename)
+
+        # Salva il modello a intervalli specificati
+        if args.epochs_save > 0 and step > 0 and step % args.epochs_save == 0:
+            if args.model == "erfnet_isomaxplus":
+                save_model(model, filename, save_isomax=True)
+            else:
+                save_model(model, filename)
+            print(f'save: {filename} (epoch: {epoch})')
+
+        # Salva il miglior modello
+        if (is_best):
+            if args.model == "erfnet_isomaxplus":
+                save_model(model, filenamebest, save_isomax=True)
+            else:
+                save_model(model, filenamebest)
+            print(f'save: {filenamebest} (epoch: {epoch})')
+            if (not enc):
+                with open(savedir + "/best.txt", "w") as myfile:
+                    myfile.write("Best epoch is %d, with Val-IoU= %.4f" % (epoch, iouVal))   
+            else:
+                with open(savedir + "/best_encoder.txt", "w") as myfile:
+                    myfile.write("Best epoch is %d, with Val-IoU= %.4f" % (epoch, iouVal)) 
+           
 
         #SAVE TO FILE A ROW WITH THE EPOCH RESULT (train loss, val loss, train IoU, val IoU)
         #Epoch		Train-loss		Test-loss	Train-IoU	Test-IoU		learningRate
@@ -428,7 +480,6 @@ def save_checkpoint(state, is_best, filenameCheckpoint, filenameBest):
     if is_best:
         print ("Saving model as best")
         torch.save(state, filenameBest)
-
 
 def main(args):
     savedir = f'../save/{args.savedir}'
