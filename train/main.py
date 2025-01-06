@@ -136,23 +136,23 @@ def train(args, model, enc=False):
     loader_val = DataLoader(dataset_val, num_workers=args.num_workers, batch_size=args.batch_size, shuffle=False)
 
     # Calculate/load class weights
-    if not os.path.exists(f"/class_weights/enet_class_weights.npy"):
+    if not os.path.exists(f"./class_weights/enet_class_weights.npy"):
         # enet class weights are calculated 
         # erfnet encoder and decoder class weights are loaded from original github repo
         weight = calculate_class_weights(loader, NUM_CLASSES)
-        np.save(f"../trained_models/enet_class_weights.npy", weight) # Save weights to disk
+        np.save(f"./class_weights/enet_class_weights.npy", weight) # Save weights to disk
     else:
         if args.model == "enet":
-            weight = np.load(f"/class_weights/enet_class_weights.npy")
+            weight = np.load(f"./class_weights/enet_class_weights.npy")
         elif args.model == "erfnet" and enc:
-            weight = np.load(f"/class_weights/erfnet_encoder_class_weights.npy")
+            weight = np.load(f"./class_weights/erfnet_encoder_class_weights.npy")
         elif args.model == "erfnet" and not enc:
             weight = np.load(f"./class_weights/erfnet_decoder_class_weights.npy")
         else: # bisenet
             weight = None
 
     if weight is not None:
-        weight = torch.from_numpy(weight)
+        weight = torch.from_numpy(weight).float()
         if args.cuda:
             weight = weight.cuda()
 
