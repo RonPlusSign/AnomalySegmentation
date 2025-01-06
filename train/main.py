@@ -173,10 +173,9 @@ def train(args, model, enc=False):
         else:
             criterion = CrossEntropyLoss2d(weight)
     elif args.model == "bisenet":
-        min_kept = int(args.batch_size * 512 * 1024 // 16) # minimum number of hard examples to retain during training
-        criterion_out = OhemCELoss(thresh=0.7, min_kept=min_kept) # principal loss
-        criterion_aux16 = OhemCELoss(thresh=0.7, min_kept=min_kept) # auxiliary loss for output16
-        criterion_aux32 = OhemCELoss(thresh=0.7, min_kept=min_kept) # auxiliary loss for output32
+        criterion_out = OhemCELoss(thresh=0.7) # principal loss
+        criterion_aux16 = OhemCELoss(thresh=0.7) # auxiliary loss for output16
+        criterion_aux32 = OhemCELoss(thresh=0.7) # auxiliary loss for output32
     else: # enet
         criterion = CrossEntropyLoss2d(weight)
 
