@@ -4,57 +4,23 @@ import torch
 import random
 from PIL import Image, ImageOps
 import numpy as np
-from erfnet import ERFNet
 import os.path as osp
 from argparse import ArgumentParser
 import torch.nn.functional as F
 from torchvision.transforms import Compose, ToTensor, Normalize, Resize
 from transform import Relabel, ToLabel, Colorize
-from enet import ENet
-from bisenet import BiSeNetV1
 from dataset1 import cityscapes
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+import importlib
+import sys
 
-seed = 42
-
-#Augmentations - different function implemented to perform random augments on both image and target
-class MyCoTransform(object):
-    def __init__(self, enc, augment=True, height=512):
-        self.enc=enc
-        self.augment = augment
-        self.height = height
-        pass
-    def __call__(self, input, target):
-        # do something to both images
-        input =  Resize(self.height, Image.BILINEAR)(input)
-        target = Resize(self.height, Image.NEAREST)(target)
-
-        if(self.augment):
-            # Random hflip
-            hflip = random.random()
-            if (hflip < 0.5):
-                input = input.transpose(Image.FLIP_LEFT_RIGHT)
-                target = target.transpose(Image.FLIP_LEFT_RIGHT)
-            
-            #Random translation 0-2 pixels (fill rest with padding
-            transX = random.randint(-2, 2) 
-            transY = random.randint(-2, 2)
-
-            input = ImageOps.expand(input, border=(transX,transY,0,0), fill=0)
-            target = ImageOps.expand(target, border=(transX,transY,0,0), fill=255) #pad label filling with 255
-            input = input.crop((0, 0, input.size[0]-transX, input.size[1]-transY))
-            target = target.crop((0, 0, target.size[0]-transX, target.size[1]-transY))   
-
-        input = ToTensor()(input)
-        if (self.enc):
-            target = Resize(int(self.height/8), Image.NEAREST)(target)
-        target = ToLabel()(target)
-        target = Relabel(255, 19)(target)
-
-        return input, target
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ERFNet = importlib.import_module('train.erfnet').ERFNet
+ERFNetTransform = importlib.import_module('train.augmentations').ERFNetTransform
 
 # general reproducibility
+seed = 42
 random.seed(seed)
 np.random.seed(seed)
 torch.manual_seed(seed)
@@ -97,20 +63,12 @@ def main():
         pre_computed_mean = torch.from_numpy(pre_computed_mean).cuda()
         print(f"pre_computed_mean {pre_computed_mean.shape}")
     
-    # Augmentations and Normalizations
-    co_transform = MyCoTransform(False, augment=False, height=512)#1024)
-    
-    # Dataset and Loader
+    # augmentations to be applied during training
+    co_transform = ERFNetTransform(False, augment=False, height=512)
     dataset_train = cityscapes(args.datadir, co_transform, 'train')
-
     loader = DataLoader(dataset_train, num_workers=args.num_workers, batch_size=1, shuffle=True)
     
-    if args.model == "erfnet":
-        model = ERFNet(NUM_CLASSES)
-    elif args.model =="enet":
-        model = ENet(NUM_CLASSES)
-    elif args.model == "bisenet":
-        model = BiSeNetV1(NUM_CLASSES)
+    model = ERFNet(NUM_CLASSES)
 
     if (not args.cpu):
         model = torch.nn.DataParallel(model).cuda()
@@ -134,13 +92,12 @@ def main():
     model.eval()
     
 
-    # Covariance matrices
+    # Covariance matrix
     cov_matrix = torch.zeros((20, 20), dtype=torch.float32, device='cuda')
     num_images = 0  
 
     sum_per_class = torch.zeros((NUM_CLASSES, NUM_CLASSES), dtype=torch.float32, device="cpu" if args.cpu else 'cuda')
     pixel_count_per_class = torch.zeros(NUM_CLASSES, dtype=torch.int32, device="cpu" if args.cpu else 'cuda')
-
 
     for images, labels in tqdm(loader):
         if not args.cpu:
