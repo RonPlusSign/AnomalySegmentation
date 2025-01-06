@@ -149,7 +149,6 @@ def main():
                     continue
             else:
                 own_state[name].copy_(param)
-        print(state_dict['state_dict'])
         return model
     model = load_my_state_dict(model, torch.load(weightspath, map_location=device))
 
