@@ -13,10 +13,11 @@ from sklearn.metrics import roc_auc_score, roc_curve, auc, precision_recall_curv
 
 from icecream import ic
 from temperature_scaling import ModelWithTemperature
-import torch.nn.functional as F # aggiunto io 
+import torch.nn.functional as F
 from torchvision.transforms import Compose, ToTensor, Normalize, Resize
 import sys
 import importlib
+from tqdm import tqdm
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -53,6 +54,40 @@ NUM_CLASSES = 20
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = True
 
+def mahalanobis_distance_score(output, means, cov_inv):
+    """
+    Compute the Mahalanobis distance-based confidence score for a test sample.
+    
+    f_x: test sample feature vector (numpy array of shape (20, 512, 1024))
+    means: class means (numpy array of shape (20,20))
+    covariance_inv: inverse of covariance matrix (numpy array of shape (20, 20))
+    
+    Returns the confidence score (512x1024)
+    """
+    
+    num_features, height, width = output.shape
+
+    # Transpose and reshape the output to handle pixels in batch
+    output_flat = output.view(num_features, -1).T  # (height * width, num_features)
+
+    # Expand means for batch computation
+    means_expanded = means.unsqueeze(1)  # (num_classes, 1, num_features)
+    output_expanded = output_flat.unsqueeze(0)  # (1, height * width, num_features)
+
+    # Compute the difference (broadcasting)
+    centered = output_expanded - means_expanded  # (num_classes, height * width, num_features)
+
+    # Compute the Mahalanobis score
+    scores = -torch.einsum('npi,ij,npj->np', centered, cov_inv, centered)  # (num_classes, height * width)
+
+    # Find the maximum score for each pixel
+    M_scores_flat = torch.abs(scores.max(dim=0).values)  #TODO  (height * width) era senza abs
+
+    # Reshape to (height, width)
+    M_scores = M_scores_flat.view(height, width)
+
+    return M_scores
+
 def main():
     parser = ArgumentParser()
     parser.add_argument(
@@ -68,7 +103,7 @@ def main():
     parser.add_argument('--num-workers', type=int, default=4)
     parser.add_argument('--batch-size', type=int, default=1)
     parser.add_argument('--cpu', action='store_true')
-    parser.add_argument('--method',default="MSP") #can be MSP or MaxLogit or MaxEntropy
+    parser.add_argument('--method',default="MSP") #can be MSP or MaxLogit or MaxEntropy or Mahalanobis
     parser.add_argument('--void', action='store_true')
     
     parser.add_argument('--temperature', default=0) # add the path of the model absolute path
@@ -76,11 +111,8 @@ def main():
     anomaly_score_list = []
     ood_gts_list = []
 
+    device = torch.device('cuda' if torch.cuda.is_available() and not args.cpu else 'cpu')
     method = args.method
-
-    #if not os.path.exists(f'results-{method}.txt'):
-        #open(f'results-{method}.txt', 'w').close()
-    #file = open(f'results-{method}.txt', 'a')
 
     modelpath = args.loadDir +"/" +args.model + ".py"
     weightspath = args.loadDir + args.loadWeights
@@ -90,13 +122,13 @@ def main():
     print ("Loading model: " + modelpath)
     print ("Loading weights: " + weightspath)
     if args.model == "erfnet":
-        model = ERFNet(NUM_CLASSES)
+        model = ERFNet(NUM_CLASSES).to(device)
     elif args.model == "erfnet_isomaxplus":
-        model = ERFNet(NUM_CLASSES, use_isomaxplus=True)
+        model = ERFNet(NUM_CLASSES, use_isomaxplus=True).to(device)
     elif args.model =="enet":
-        model = ENet(NUM_CLASSES)
+        model = ENet(NUM_CLASSES).to(device)
     elif args.model == "bisenet":
-        model = BiSeNetV1(NUM_CLASSES)
+        model = BiSeNetV1(NUM_CLASSES).to(device)
 
     if (not args.cpu):
         model = torch.nn.DataParallel(model).cuda()
@@ -115,7 +147,7 @@ def main():
             else:
                 own_state[name].copy_(param)
         return model
-    model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
+    model = load_my_state_dict(model, torch.load(weightspath, map_location=device))
 
     if(temperature != 0 ):
         model = ModelWithTemperature(model, temperature = temperature)
@@ -123,10 +155,19 @@ def main():
     print ("Model and weights LOADED successfully")
     model.eval()
     
-    for path in glob.glob(os.path.expanduser(str(args.input))):
+    if method == "Mahalanobis":
+        # Load mean and covariance matrices from "save" folder
+        means = np.load("/content/AnomalySegmentation/save/mean_cityscapes_erfnet.npy")
+        cov = np.load("/content/AnomalySegmentation/save/cov_cityscapes_erfnet.npy")
+        cov_inv = np.linalg.inv(cov)
+        
+        # Convert to PyTorch tensors
+        means = torch.from_numpy(means).to(device)
+        cov_inv = torch.from_numpy(cov_inv).to(device)
+    
+    for path in tqdm(glob.glob(os.path.expanduser(str(args.input)))):
         print(path)
-        #images = torch.from_numpy(np.array(Image.open(path).convert('RGB'))).unsqueeze(0).float()
-        images = input_transform((Image.open(path).convert('RGB'))).unsqueeze(0).float()
+        images = input_transform((Image.open(path).convert('RGB'))).unsqueeze(0).float().to(device)
         
         with torch.no_grad():
             if args.model == "bisenet":
@@ -147,9 +188,16 @@ def main():
                 probs = F.softmax(result, dim=0)
                 entropy = torch.div(torch.sum(-probs * torch.log(probs), dim=0), torch.log(torch.tensor(probs.shape[0])))
                 anomaly_result = entropy.data.cpu().numpy().astype("float32")
-            else :# MSP
+            elif (method == "MSP"):
                 anomaly_result = 1.0 - torch.max(F.softmax(result, dim=0), dim=0)[0]
                 anomaly_result = anomaly_result.data.cpu().numpy()
+            elif(method == "Mahalanobis"):
+                anomaly_result = mahalanobis_distance_score(result, means, cov_inv) # TODO: check if result is ok with only 19 elements, Mahalanobis expects 20
+                anomaly_result = anomaly_result.data.cpu().numpy()
+                print(f"Mahalanobis score: {anomaly_result}")
+            else:
+                raise ValueError("Invalid method")
+             
 
         # Load ground truth mask
         pathGT = path.replace("images", "labels_masks")                
@@ -182,7 +230,7 @@ def main():
         else:
              ood_gts_list.append(ood_gts)
              anomaly_score_list.append(anomaly_result)
-        del result, anomaly_result, ood_gts, mask
+        del result, anomaly_result, ood_gts, mask, images
         torch.cuda.empty_cache()
 
     #file.write( "\n")
