@@ -35,6 +35,7 @@ from train.losses.isomax_plus_loss import IsoMaxPlusLossSecondPart, IsoMaxPlusLo
 from train.losses.cross_entropy_loss import CrossEntropyLoss2d
 from train.losses.logit_norm_loss import LogitNormLoss
 from train.losses.focal_loss import FocalLoss
+from train.losses.ohem_ce_loss import OhemCELoss
 
 NUM_CHANNELS = 3
 NUM_CLASSES = 20  # 19 classes + void
@@ -96,8 +97,8 @@ def calculate_class_weights(dataloader, num_classes, c=1.02):
     - num_classes (``int``): The number of classes.
     - c (``int``, optional): AN additional hyper-parameter which restricts
     the interval of values for the weights. Default: 1.02.
-
     """
+
     class_count = 0
     total = 0
     for _, label in dataloader:
@@ -120,53 +121,6 @@ def calculate_class_weights(dataloader, num_classes, c=1.02):
 #@torch.compile
 def train(args, model, enc=False):
     best_acc = 0
-    
-    #TODO: calculate weights by processing dataset histogram (now its being set by hand from the torch values)
-    #create a loder to run all images and calculate histogram of labels, then create weight array using class balancing
-
-    weight = torch.ones(NUM_CLASSES)
-    if (enc):
-        weight[0] = 2.3653597831726	
-        weight[1] = 4.4237880706787	
-        weight[2] = 2.9691488742828	
-        weight[3] = 5.3442072868347	
-        weight[4] = 5.2983593940735	
-        weight[5] = 5.2275490760803	
-        weight[6] = 5.4394111633301	
-        weight[7] = 5.3659925460815	
-        weight[8] = 3.4170460700989	
-        weight[9] = 5.2414722442627	
-        weight[10] = 4.7376127243042	
-        weight[11] = 5.2286224365234	
-        weight[12] = 5.455126285553	
-        weight[13] = 4.3019247055054	
-        weight[14] = 5.4264230728149	
-        weight[15] = 5.4331531524658	
-        weight[16] = 5.433765411377	
-        weight[17] = 5.4631009101868	
-        weight[18] = 5.3947434425354
-    else:
-        weight[0] = 2.8149201869965	
-        weight[1] = 6.9850029945374	
-        weight[2] = 3.7890393733978	
-        weight[3] = 9.9428062438965	
-        weight[4] = 9.7702074050903	
-        weight[5] = 9.5110931396484	
-        weight[6] = 10.311357498169	
-        weight[7] = 10.026463508606	
-        weight[8] = 4.6323022842407	
-        weight[9] = 9.5608062744141	
-        weight[10] = 7.8698215484619	
-        weight[11] = 9.5168733596802	
-        weight[12] = 10.373730659485	
-        weight[13] = 6.6616044044495	
-        weight[14] = 10.260489463806	
-        weight[15] = 10.287888526917	
-        weight[16] = 10.289801597595	
-        weight[17] = 10.405355453491	
-        weight[18] = 10.138095855713	
-
-    weight[19] = 0
 
     assert os.path.exists(args.datadir), "Error: datadir (dataset directory) could not be loaded"
 
@@ -182,12 +136,20 @@ def train(args, model, enc=False):
     loader_val = DataLoader(dataset_val, num_workers=args.num_workers, batch_size=args.batch_size, shuffle=False)
 
     # Calculate/load class weights
-    if not os.path.exists(f"../trained_models/{args.savedir}/cityscapes_class_weights.npy"):
+    if not os.path.exists(f"../trained_models/{args.savedir}/enet_class_weights.npy"):
+        # enet class weights are calculated 
+        # erfnet encoder and decoder class weights are loaded from original github repo
         weight = calculate_class_weights(loader, NUM_CLASSES)
-        print(f"Class weights: {weight}")    
-        np.save(f"../trained_models/cityscapes_class_weights.npy", weight) # Save weights to disk
+        np.save(f"../trained_models/enet_class_weights.npy", weight) # Save weights to disk
     else:
-        weight = np.load(f"../trained_models/cityscapes_class_weights.npy")
+        if args.model == "enet":
+            weight = np.load(f"../trained_models/enet_class_weights.npy")
+        elif args.model == "erfnet" and enc:
+            weight = np.load(f"../trained_models/erfnet_encoder_class_weights.npy")
+        elif args.model == "erfnet" and not enc:
+            weight = np.load(f"../trained_models/erfnet_decoder_class_weights.npy")
+        else: # bisenet
+            weight = None
 
     weight = torch.from_numpy(weight)
     if args.cuda:
@@ -209,7 +171,12 @@ def train(args, model, enc=False):
             criterion = FocalLoss()
         else:
             criterion = CrossEntropyLoss2d(weight)
-    else:
+    elif args.model == "bisenet":
+        min_kept = int(args.batch_size * 512 * 1024 // 16) # minimum number of hard examples to retain during training
+        criterion_out = OhemCELoss(thresh=0.7, min_kept=min_kept) # principal loss
+        criterion_aux16 = OhemCELoss(thresh=0.7, min_kept=min_kept) # auxiliary loss for output16
+        criterion_aux32 = OhemCELoss(thresh=0.7, min_kept=min_kept) # auxiliary loss for output32
+    else: # enet
         criterion = CrossEntropyLoss2d(weight)
 
     savedir = f'../save/{args.savedir}'
@@ -320,10 +287,10 @@ def train(args, model, enc=False):
 
             if args.model == "bisenet":
                 # combine the principal loss with the auxiliary losses 
-                loss_1 = criterion(outputs[0], targets[:, 0])
-                loss_2 = criterion(outputs[1], targets[:, 0])
-                loss_3 = criterion(outputs[2], targets[:, 0])
-                loss = (loss_1 + loss_2 + loss_3) / 3
+                loss_out = criterion_out(outputs[0], targets[:, 0])
+                loss_aux16 = criterion_aux16(outputs[1], targets[:, 0])
+                loss_aux32 = criterion_aux32(outputs[2], targets[:, 0])
+                loss = loss_out + loss_aux16 + loss_aux32
             else:
                 loss = criterion(outputs, targets[:, 0])
 
@@ -391,10 +358,10 @@ def train(args, model, enc=False):
 
             if args.model == "bisenet":
                 # combine the principal loss with the auxiliary losses 
-                loss_1 = criterion(outputs[0], targets[:, 0])
-                loss_2 = criterion(outputs[1], targets[:, 0])
-                loss_3 = criterion(outputs[2], targets[:, 0])
-                loss = (loss_1 + loss_2 + loss_3) / 3
+                loss_out = criterion_out(outputs[0], targets[:, 0])
+                loss_aux16 = criterion_aux16(outputs[1], targets[:, 0])
+                loss_aux32 = criterion_aux32(outputs[2], targets[:, 0])
+                loss = loss_out + loss_aux16 + loss_aux32
             else:
                 loss = criterion(outputs, targets[:, 0])
             
@@ -403,13 +370,11 @@ def train(args, model, enc=False):
 
             #Add batch to calculate TP, FP and FN for iou estimation
             if (doIouVal):
-                #start_time_iou = time.time()
                 if args.model == "bisenet":
                     iouEvalVal.addBatch(outputs[0].max(1)[1].unsqueeze(1).data, targets.data)
                 else:
                     iouEvalVal.addBatch(outputs.max(1)[1].unsqueeze(1).data, targets.data)
-                #print ("Time to add confusion matrix: ", time.time() - start_time_iou)
-
+                
             if args.visualize and args.steps_plot > 0 and step % args.steps_plot == 0:
                 start_time_plot = time.time()
                 image = inputs[0].cpu().data
