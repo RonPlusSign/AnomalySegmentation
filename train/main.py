@@ -171,8 +171,8 @@ def train(args, model, enc=False):
     assert os.path.exists(args.datadir), "Error: datadir (dataset directory) could not be loaded"
 
     # Augmentations and Normalizations
-    co_transform = MyCoTransform(enc, augment=True, height=args.height)#1024)
-    co_transform_val = MyCoTransform(enc, augment=False, height=args.height)#1024)
+    co_transform = MyCoTransform(enc, augment=True, height=args.height)
+    co_transform_val = MyCoTransform(enc, augment=False, height=args.height)
 
     # Dataset and Loader
     dataset_train = cityscapes(args.datadir, co_transform, 'train')
@@ -181,10 +181,15 @@ def train(args, model, enc=False):
     loader = DataLoader(dataset_train, num_workers=args.num_workers, batch_size=args.batch_size, shuffle=True)
     loader_val = DataLoader(dataset_val, num_workers=args.num_workers, batch_size=args.batch_size, shuffle=False)
 
-    # Calculate class weights
-    weight = calculate_class_weights(loader, NUM_CLASSES)
-    print(f"Class weights: {weight}")
+    # Calculate/load class weights
+    if not os.path.exists(f"../trained_models/{args.savedir}/cityscapes_class_weights.npy"):
+        weight = calculate_class_weights(loader, NUM_CLASSES)
+        print(f"Class weights: {weight}")    
+        np.save(f"../trained_models/cityscapes_class_weights.npy", weight) # Save weights to disk
+    else:
+        weight = np.load(f"../trained_models/cityscapes_class_weights.npy")
 
+    weight = torch.from_numpy(weight)
     if args.cuda:
         weight = weight.cuda()
 
