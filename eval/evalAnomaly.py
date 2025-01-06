@@ -120,7 +120,7 @@ def main():
 
     if (not args.cpu):
         model = torch.nn.DataParallel(model).cuda()
-
+    """
     def load_my_state_dict(model, state_dict):  #custom function to load model when not all dict elements
         own_state = model.state_dict()
         print(state_dict.keys())
@@ -136,7 +136,7 @@ def main():
                 own_state[name].copy_(param)
         return model
     model = load_my_state_dict(model, torch.load(weightspath, map_location=device))
-
+    """
     def load_my_state_dict(model, state_dict, args, device):  #custom function to load model when not all dict elements
         own_state = model.state_dict()
         #print(state_dict.keys())
