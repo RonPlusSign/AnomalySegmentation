@@ -28,20 +28,6 @@ BiSeNetV1 = importlib.import_module('train.bisenet').BiSeNetV1
 
 seed = 42
 
-input_transform = Compose(
-    [
-        Resize((512, 1024), Image.BILINEAR),
-        ToTensor(),
-        #  Normalize([.485, .456, .406], [.229, .224, .225]),
-    ]
-)
-
-target_transform = Compose(
-    [
-        Resize((512, 1024), Image.NEAREST),
-    ]
-)
-
 # general reproducibility
 random.seed(seed)
 np.random.seed(seed)
@@ -105,14 +91,16 @@ def main():
     parser.add_argument('--cpu', action='store_true')
     parser.add_argument('--method',default="MSP") #can be MSP or MaxLogit or MaxEntropy or Mahalanobis
     parser.add_argument('--void', action='store_true')
-    
     parser.add_argument('--temperature', default=0) # add the path of the model absolute path
+
     args = parser.parse_args()
     anomaly_score_list = []
     ood_gts_list = []
 
     device = torch.device('cuda' if torch.cuda.is_available() and not args.cpu else 'cpu')
     method = args.method
+    input_transform = Compose([Resize((512, 1024), Image.BILINEAR), ToTensor()])
+    target_transform = Compose([Resize((512, 1024), Image.NEAREST)])
 
     modelpath = args.loadDir +"/" +args.model + ".py"
     weightspath = args.loadDir + args.loadWeights
