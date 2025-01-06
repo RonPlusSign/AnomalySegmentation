@@ -104,6 +104,12 @@ class RandomResizedCrop(object):
     def __call__(self, im, lb):
         if self.size is None:
             return im, lb
+        
+        # Convert to NumPy array if input is a PIL image
+        if not isinstance(im, np.ndarray):
+            im = np.array(im)
+        if not isinstance(lb, np.ndarray):
+            lb = np.array(lb)
 
         assert im.shape[:2] == lb.shape[:2]
 
