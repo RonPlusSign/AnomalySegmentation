@@ -68,7 +68,7 @@ def main():
     dataset_train = cityscapes(args.datadir, co_transform, 'train')
     loader = DataLoader(dataset_train, num_workers=args.num_workers, batch_size=1, shuffle=True)
     
-    model = ERFNet(NUM_CLASSES)
+    model = ERFNet(NUM_CLASSES+1)
 
     if (not args.cpu):
         model = torch.nn.DataParallel(model).cuda()
@@ -110,6 +110,8 @@ def main():
                 result = model(images)[0].squeeze(0)
             else:
                 result = model(images).squeeze(0)
+            # remove last channel
+            result = result[:NUM_CLASSES]
         
         # If mean is not computed, accumulate sum and count per class
         if not mean_is_computed:
