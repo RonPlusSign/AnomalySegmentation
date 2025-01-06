@@ -62,9 +62,8 @@ class BiSeNetTrainTransform(object):
         ])
 
     def __call__(self, input, target):
-        input = self.trans_func(input)
-        target = self.trans_func(target)
-        input = ToTensor()(input)
+        input, target = self.trans_func(input, target)
+        input = tt.ToTensor()(input)
         target = ToLabel()(target)
         target = Relabel(255, 19)(target)
         return input, target
