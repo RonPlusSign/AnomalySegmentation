@@ -26,7 +26,7 @@ np.random.seed(seed)
 torch.manual_seed(seed)
 
 NUM_CHANNELS = 3
-NUM_CLASSES = 20
+NUM_CLASSES = 19
 
 # gpu training specific
 torch.backends.cudnn.deterministic = True
@@ -93,7 +93,7 @@ def main():
     
 
     # Covariance matrix
-    cov_matrix = torch.zeros((20, 20), dtype=torch.float32, device='cuda')
+    cov_matrix = torch.zeros((NUM_CLASSES, NUM_CLASSES), dtype=torch.float32, device='cuda')
     num_images = 0  
 
     sum_per_class = torch.zeros((NUM_CLASSES, NUM_CLASSES), dtype=torch.float32, device="cpu" if args.cpu else 'cuda')
