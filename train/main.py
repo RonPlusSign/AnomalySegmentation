@@ -35,7 +35,7 @@ from train.losses.cross_entropy_loss import CrossEntropyLoss2d
 from train.losses.logit_norm_loss import LogitNormLoss
 from train.losses.focal_loss import FocalLoss
 from train.losses.ohem_ce_loss import OhemCELoss
-from train.augmentations import ERFNetTransform, BiSeNetTrainTransform, BiSeNetEvalTransform
+from train.augmentations import ERFNetTransform, BiSeNetTrainTransform, BiSeNetEvalTransform, ENetTransform
 
 NUM_CHANNELS = 3
 NUM_CLASSES = 20  # 19 classes + void
@@ -94,12 +94,11 @@ def train(args, model, enc=False):
         co_transform = ERFNetTransform(enc, augment=True, height=args.height)
         co_transform_val = ERFNetTransform(enc, augment=False, height=args.height)
     elif args.model == "bisenet":
-        img_mean = [0.485, 0.456, 0.406]
-        img_std = [0.229, 0.224, 0.225]
-        crop_size = [1024, 1024]
-        train_scale = [0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
-        co_transform = BiSeNetTrainTransform(img_mean, img_std, train_scale, crop_size)
-        co_transform_val = BiSeNetEvalTransform(img_mean, img_std)
+        co_transform = BiSeNetTrainTransform()
+        co_transform_val = BiSeNetEvalTransform()
+    else: # enet
+        co_transform = ENetTransform()
+        co_transform_val = ENetTransform()
     
     # Dataset and Loader
     dataset_train = cityscapes(args.datadir, co_transform, 'train')
