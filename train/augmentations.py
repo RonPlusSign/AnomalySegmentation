@@ -85,6 +85,6 @@ class ENetTransform(object):
         input = self.image_transform(input)
         target = self.label_transform(target)
 
-        target = ToLabel()(target)
+        target = ToLabel()(target).squeeze(1)
         target = Relabel(255, 19)(target)
         return input, target
