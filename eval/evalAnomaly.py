@@ -290,10 +290,10 @@ def main():
 
     # Plot ROC and PR curves
     if args.show_plots:
-        plot_roc(val_label, val_out, f"ROC curve (AUPRC = {prc_auc*100:.2f}%)")
-        plot_pr(val_label, val_out, f"PR curve (FPR@TPR95 = {fpr*100:.2f}%)")
-        plot_barcode(val_label, val_out, f"Barcode plot")
-
+        plot_roc(val_out, val_label, f"ROC curve (AUPRC = {prc_auc*100:.2f}%)")
+        plot_pr(val_out, val_label, f"PR curve (FPR@TPR95 = {fpr*100:.2f}%)")
+        plot_barcode(val_out, val_label)
+    
     # Save the colored score images
     if args.save_colored_dir:
         for i, path in enumerate(glob.glob(os.path.expanduser(str(args.input)))):
