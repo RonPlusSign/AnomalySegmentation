@@ -67,6 +67,7 @@ def plot_roc(preds, labels, title="Receiver operating characteristic", save_path
     plt.ylabel('True Positive Rate')
     plt.title(title)
     plt.legend(loc="lower right")
+    plt.tight_layout()
     if save_path is not None:
         plt.savefig(f"{save_path}/{file_name}_roc_curve.png")
     else:
@@ -101,6 +102,7 @@ def plot_pr(preds, labels, title="Precision recall curve", save_path=None, file_
     plt.ylabel('Precision')
     plt.title(title)
     plt.legend(loc="lower right")
+    plt.tight_layout()
     if save_path is not None:
         plt.savefig(f"{save_path}/{file_name}_pr_curve.png")
     else:
@@ -123,6 +125,7 @@ def plot_barcode(preds, labels, title="Barcode plot", save_path=None, file_name=
     # a horizontal barcode
     ax = fig.add_axes([0.3, 0.1, 0.6, 0.1], **axprops)
     ax.imshow(x.reshape((1, -1, 3)), **barprops)
+    plt.tight_layout()
     
     
     if save_path is not None:

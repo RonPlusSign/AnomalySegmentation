@@ -94,8 +94,8 @@ def main():
     parser.add_argument('--method',default="MSP") #can be MSP or MaxLogit or MaxEntropy or Mahalanobis
     parser.add_argument('--void', action='store_true')
     parser.add_argument('--temperature', default=0) # add the path of the model absolute path
-    parser.add_argument('--save-colored-dir', action='store_true', help='Directory where to save the image as colored score. Empty: do not save')
-    parser.add_argument('--save-plots-dir', action='store_true', help='Directory where to save ROC and PR curves. Empty: do not save')
+    parser.add_argument('--save-colored-dir', type=str, default=None, help='Directory where to save the image as colored score. Empty: do not save')
+    parser.add_argument('--save-plots-dir', type=str, default=None, help='Directory where to save ROC and PR curves. Empty: do not save')
 
     args = parser.parse_args()
     anomaly_score_list = []
@@ -265,17 +265,18 @@ def main():
     print(f'FPR@TPR95: {fpr*100.0}')
 
     # Plot ROC and PR curves
-    if args.save_colored_dir:
+    if args.save_plots_dir:
+        os.makedirs(args.save_plots_dir, exist_ok=True) # Create the directory if it does not exist
         plot_roc(val_out, val_label, title=f"ROC curve (AUPRC = {prc_auc*100:.2f}%)", save_path=args.save_plots_dir, file_name=f"{args.model}_{args.method}_ROC_curve")
         plot_pr(val_out, val_label, title=f"PR curve (FPR@TPR95 = {fpr*100:.2f}%)", save_path=args.save_plots_dir, file_name=f"{args.model}_{args.method}_PR_curve")
         plot_barcode(val_out, val_label, save_path=args.save_plots_dir, file_name=f"{args.model}_{args.method}_barcode")
     
     # Save the colored score images
     if args.save_colored_dir:
+        os.makedirs(args.save_colored_dir, exist_ok=True) # Create the directory if it does not exist
         for i, path in enumerate(glob.glob(os.path.expanduser(str(args.input)))):
             file_name = os.path.splitext(os.path.basename(path))[0]
             save_colored_score_image(path, anomaly_score_list[i], save_path=args.save_colored_dir, file_name=file_name)
-    
 
 if __name__ == '__main__':
     main()
