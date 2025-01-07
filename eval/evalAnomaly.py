@@ -8,7 +8,8 @@ from PIL import Image
 import numpy as np
 import os.path as osp
 from argparse import ArgumentParser
-from ood_metrics import fpr_at_95_tpr, calc_metrics, plot_roc, plot_pr, plot_barcode
+from ood_metrics import fpr_at_95_tpr, calc_metrics
+from visualization import save_colored_score_image, plot_roc, plot_pr, plot_barcode
 from sklearn.metrics import roc_auc_score, roc_curve, auc, precision_recall_curve, average_precision_score
 
 from icecream import ic
@@ -74,31 +75,6 @@ def mahalanobis_distance_score(output, means, cov_inv):
 
     return M_scores
 
-def save_colored_score_image(image_path, anomaly_score, save_path):
-    """
-    Save the image with the anomaly score colored in a new image.
-    
-    image_path: path to the input image
-    anomaly_score: anomaly score for each pixel
-    save_path: path to save the colored image
-    """
-    
-    # Load the image
-    image = cv2.imread(image_path)
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    
-    # Normalize the anomaly score
-    anomaly_score = (anomaly_score - np.min(anomaly_score)) / (np.max(anomaly_score) - np.min(anomaly_score))
-    
-    # Apply the colormap
-    anomaly_score = cv2.applyColorMap((anomaly_score * 255).astype(np.uint8), cv2.COLORMAP_JET)
-    
-    # Combine the original image and the colored anomaly score
-    combined = cv2.addWeighted(image, 0.5, anomaly_score, 0.5, 0)
-    
-    # Save the image
-    cv2.imwrite(save_path, combined)
-
 
 def main():
     parser = ArgumentParser()
@@ -119,7 +95,7 @@ def main():
     parser.add_argument('--void', action='store_true')
     parser.add_argument('--temperature', default=0) # add the path of the model absolute path
     parser.add_argument('--save-colored-dir', action='store_true', help='Directory where to save the image as colored score. Empty: do not save')
-    parser.add_argument('--show-plots', action='store_true', help='Show ROC and PR curves')
+    parser.add_argument('--save-plots-dir', action='store_true', help='Directory where to save ROC and PR curves. Empty: do not save')
 
     args = parser.parse_args()
     anomaly_score_list = []
@@ -289,16 +265,16 @@ def main():
     print(f'FPR@TPR95: {fpr*100.0}')
 
     # Plot ROC and PR curves
-    if args.show_plots:
-        plot_roc(val_out, val_label, f"ROC curve (AUPRC = {prc_auc*100:.2f}%)")
-        plot_pr(val_out, val_label, f"PR curve (FPR@TPR95 = {fpr*100:.2f}%)")
-        plot_barcode(val_out, val_label)
+    if args.save_colored_dir:
+        plot_roc(val_out, val_label, title=f"ROC curve (AUPRC = {prc_auc*100:.2f}%)", save_path=args.save_plots_dir, file_name=f"{args.model}_{args.method}_ROC_curve")
+        plot_pr(val_out, val_label, title=f"PR curve (FPR@TPR95 = {fpr*100:.2f}%)", save_path=args.save_plots_dir, file_name=f"{args.model}_{args.method}_PR_curve")
+        plot_barcode(val_out, val_label, save_path=args.save_plots_dir, file_name=f"{args.model}_{args.method}_barcode")
     
     # Save the colored score images
     if args.save_colored_dir:
         for i, path in enumerate(glob.glob(os.path.expanduser(str(args.input)))):
-            save_path = os.path.join(args.save_colored_dir, f"{i}.png")
-            save_colored_score_image(path, anomaly_score_list[i], save_path)
+            file_name = os.path.splitext(os.path.basename(path))[0]
+            save_colored_score_image(path, anomaly_score_list[i], save_path=args.save_colored_dir, file_name=file_name)
     
 
 if __name__ == '__main__':
