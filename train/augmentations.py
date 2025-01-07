@@ -70,7 +70,7 @@ class BiSeNetTrainTransform(object):
     
 class BiSeNetEvalTransform(object):
     def __call__(self, input, target):
-        input = ToTensor()(input)
+        input = tt.ToTensor()(input)
         target = ToLabel()(target)
         target = Relabel(255, 19)(target)
         return input, target
