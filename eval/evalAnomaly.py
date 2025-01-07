@@ -8,7 +8,7 @@ from PIL import Image
 import numpy as np
 import os.path as osp
 from argparse import ArgumentParser
-from ood_metrics import fpr_at_95_tpr, calc_metrics, plot_roc, plot_pr,plot_barcode
+from ood_metrics import fpr_at_95_tpr, calc_metrics, plot_roc, plot_pr, plot_barcode
 from sklearn.metrics import roc_auc_score, roc_curve, auc, precision_recall_curve, average_precision_score
 
 from icecream import ic
@@ -74,6 +74,32 @@ def mahalanobis_distance_score(output, means, cov_inv):
 
     return M_scores
 
+def save_colored_score_image(image_path, anomaly_score, save_path):
+    """
+    Save the image with the anomaly score colored in a new image.
+    
+    image_path: path to the input image
+    anomaly_score: anomaly score for each pixel
+    save_path: path to save the colored image
+    """
+    
+    # Load the image
+    image = cv2.imread(image_path)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    
+    # Normalize the anomaly score
+    anomaly_score = (anomaly_score - np.min(anomaly_score)) / (np.max(anomaly_score) - np.min(anomaly_score))
+    
+    # Apply the colormap
+    anomaly_score = cv2.applyColorMap((anomaly_score * 255).astype(np.uint8), cv2.COLORMAP_JET)
+    
+    # Combine the original image and the colored anomaly score
+    combined = cv2.addWeighted(image, 0.5, anomaly_score, 0.5, 0)
+    
+    # Save the image
+    cv2.imwrite(save_path, combined)
+
+
 def main():
     parser = ArgumentParser()
     parser.add_argument(
@@ -92,6 +118,8 @@ def main():
     parser.add_argument('--method',default="MSP") #can be MSP or MaxLogit or MaxEntropy or Mahalanobis
     parser.add_argument('--void', action='store_true')
     parser.add_argument('--temperature', default=0) # add the path of the model absolute path
+    parser.add_argument('--save-colored-dir', action='store_true', help='Directory where to save the image as colored score. Empty: do not save')
+    parser.add_argument('--show-plots', action='store_true', help='Show ROC and PR curves')
 
     args = parser.parse_args()
     anomaly_score_list = []
@@ -195,7 +223,7 @@ def main():
                 anomaly_result = 1.0 - torch.max(F.softmax(result, dim=0), dim=0)[0]
                 anomaly_result = anomaly_result.data.cpu().numpy()
             elif(method == "Mahalanobis"):
-                anomaly_result = mahalanobis_distance_score(result, means, cov_inv) # TODO: check if result is ok with only 19 elements, Mahalanobis expects 20
+                anomaly_result = mahalanobis_distance_score(result, means, cov_inv)
                 anomaly_result = anomaly_result.data.cpu().numpy()
                 print(f"Mahalanobis score: {anomaly_result}")
             else:
@@ -260,8 +288,18 @@ def main():
     print(f'AUPRC score: {prc_auc*100.0}')
     print(f'FPR@TPR95: {fpr*100.0}')
 
-    #file.write(('    AUPRC score:' + str(prc_auc*100.0) + '   FPR@TPR95:' + str(fpr*100.0) ))
-    #file.close()
+    # Plot ROC and PR curves
+    if args.show_plots:
+        plot_roc(val_out, val_label, f"ROC curve (AUPRC = {prc_auc*100:.2f}%)")
+        plot_pr(val_out, val_label, f"PR curve (FPR@TPR95 = {fpr*100:.2f}%)")
+        plot_barcode(val_out, val_label)
+    
+    # Save the colored score images
+    if args.save_colored_dir:
+        for i, path in enumerate(glob.glob(os.path.expanduser(str(args.input)))):
+            save_path = os.path.join(args.save_colored_dir, f"{i}.png")
+            save_colored_score_image(path, anomaly_score_list[i], save_path)
+    
 
 if __name__ == '__main__':
     main()
