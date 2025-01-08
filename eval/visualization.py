@@ -8,6 +8,8 @@ import cv2
 from PIL import Image, ImageDraw, ImageFont
 import os
 
+from argparse import ArgumentParser
+
 def generate_colormap():
     """ Generate a colormap that gradually goes from blue to white to red """
 
@@ -218,5 +220,14 @@ def create_concatenated_image_with_titles(input_folder, output_image):
     concatenated_image.save(output_image)
     print(f"Immagine concatenata salvata come {output_image}")
 
-# Esempio di utilizzo
-create_concatenated_image_with_titles("baselines", "output.png")
+
+def main():
+    parser = ArgumentParser()
+    parser.add_argument('--name_dir',default="/content/AnomalySegmentation/visualization/baselines")
+    parser.add_argument('--name_output', default="baseline_visualization.png")
+    args = parser.parse_args()
+
+    create_concatenated_image_with_titles(args.name_dir, args.name_output)
+
+if __name__ == '__main__':
+    main()
