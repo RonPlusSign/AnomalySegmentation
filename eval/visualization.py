@@ -54,7 +54,7 @@ def save_colored_score_image(image_path, anomaly_score, save_path, file_name):
     # combined = cv2.addWeighted(image, 0.5, anomaly_score, 0.5, 0)
     
     # Save the image
-    cv2.imwrite(f"{save_path}/{file_name}_colored_score_image.png", cv2.cvtColor(anomaly_score, cv2.COLOR_RGB2BGR))
+    cv2.imwrite(f"{save_path}/{file_name}.png", cv2.cvtColor(anomaly_score, cv2.COLOR_RGB2BGR))
 
 
 def plot_roc(preds, labels, title="Receiver operating characteristic", save_path=None, file_name=None):
