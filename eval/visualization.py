@@ -159,38 +159,39 @@ def plot_barcode(preds, labels, title="Barcode plot", save_path=None, file_name=
     else:
         plt.show()
 
-from PIL import Image, ImageDraw, ImageFont
-import os
-
-from PIL import Image, ImageDraw, ImageFont
-import os
-
 def create_concatenated_image_with_titles(input_folder, output_image):
     # Assicurati che il font sia disponibile sul tuo sistema
     font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-    font_size = 20
+    font_size = 40  # Aumenta la dimensione del font
 
     images = []
     titles = []
 
-    for file_name in sorted(os.listdir(input_folder)):
+    # Ordina le immagini: "image" davanti, seguita da "ground_truth", poi le altre
+    sorted_files = sorted(os.listdir(input_folder), key=lambda x: (x != "image.jpg", x != "ground_truth.png", x))
+
+    seen_files = set()  # Per evitare duplicati
+
+    for file_name in sorted_files:
         file_path = os.path.join(input_folder, file_name)
         if os.path.isfile(file_path):
             try:
-                # Converti "Image.jpg" in PNG e fai resize
-                if file_name.lower() == "image.jpg":
+                # Converti "Image.jpg" in PNG e fai resize inverso (1024x512 invece di 512x1024)
+                if file_name.lower() == "image.jpg" and "image" not in seen_files:
                     with Image.open(file_path) as img:
                         img = img.convert("RGBA")
-                        img = img.resize((512, 1024))
+                        img = img.resize((1024, 512))
                         new_file_path = os.path.join(input_folder, "image.png")
                         img.save(new_file_path, "PNG")
                         images.append(img)
-                        titles.append(os.path.splitext(file_name)[0])
-                elif file_name.lower().endswith(".png"):
+                        titles.append("image")
+                        seen_files.add("image")
+                elif file_name.lower().endswith(".png") and os.path.splitext(file_name)[0] not in seen_files:
                     with Image.open(file_path) as img:
                         img = img.convert("RGBA")
                         images.append(img)
                         titles.append(os.path.splitext(file_name)[0])
+                        seen_files.add(os.path.splitext(file_name)[0])
             except Exception as e:
                 print(f"Errore nel caricamento del file {file_name}: {e}")
 
