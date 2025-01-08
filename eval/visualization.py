@@ -159,6 +159,9 @@ def plot_barcode(preds, labels, title="Barcode plot", save_path=None, file_name=
     else:
         plt.show()
 
+from PIL import Image, ImageDraw, ImageFont
+import os
+
 def create_concatenated_image_with_titles(input_folder, output_image):
     # Assicurati che il font sia disponibile sul tuo sistema
     font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
@@ -206,8 +209,9 @@ def create_concatenated_image_with_titles(input_folder, output_image):
     # Posiziona le immagini e i titoli
     x_offset = 0
     for img, title in zip(images, titles):
-        # Disegna il titolo sopra l'immagine
-        text_width, text_height = draw.textsize(title, font=font)
+        # Calcola le dimensioni del testo usando textbbox
+        bbox = draw.textbbox((0, 0), title, font=font)
+        text_width, text_height = bbox[2] - bbox[0], bbox[3] - bbox[1]
         text_x = x_offset + (img.width - text_width) // 2
         text_y = 5
         draw.text((text_x, text_y), title, fill="black", font=font)
