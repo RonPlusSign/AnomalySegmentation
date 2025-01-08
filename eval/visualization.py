@@ -163,23 +163,22 @@ from PIL import Image, ImageDraw, ImageFont
 import os
 
 def create_concatenated_image_with_titles(input_folder, output_image):
-    # Imposta una dimensione del font grande
-    font_size = 300  # Dimensione molto più grande
-    title_margin = 50  # Margine extra sotto il testo
+    font_size = 90 # font size
+    title_margin = 50  # margin under the title
 
     images = []
     titles = []
 
-    # Ordina le immagini: "image" davanti, seguita da "ground_truth", poi le altre
+    # Order the files in the folder 
     sorted_files = sorted(os.listdir(input_folder), key=lambda x: (x.lower() != "image.jpg", x.lower() != "ground_truth.png", x.lower()))
 
-    seen_files = set()  # Per evitare duplicati
+    seen_files = set()  # acoid duplicates
 
     for file_name in sorted_files:
         file_path = os.path.join(input_folder, file_name)
         if os.path.isfile(file_path):
             try:
-                # Converti "Image.jpg" in PNG e fai resize inverso (1024x512 invece di 512x1024)
+                # Convert image.jpg to image.png and resize it
                 if file_name.lower() == "image.jpg" and "image" not in seen_files:
                     with Image.open(file_path) as img:
                         img = img.convert("RGBA")
@@ -187,19 +186,25 @@ def create_concatenated_image_with_titles(input_folder, output_image):
                         new_file_path = os.path.join(input_folder, "image.png")
                         img.save(new_file_path, "PNG")
                         images.append(img)
-                        titles.append("image")
+                        titles.append("Image")
                         seen_files.add("image")
                 elif file_name.lower().endswith(".png") and os.path.splitext(file_name)[0] not in seen_files:
                     with Image.open(file_path) as img:
                         img = img.convert("RGBA")
                         images.append(img)
-                        titles.append(os.path.splitext(file_name)[0])
-                        seen_files.add(os.path.splitext(file_name)[0])
+                        # Titoli personalizzati
+                        base_title = os.path.splitext(file_name)[0].lower()
+                        if base_title == "ground_truth":
+                            titles.append("Ground Truth") 
+                        else:
+                            titles.append(base_title.capitalize()) # Capitalize the first letter
+
+                        seen_files.add(base_title)
             except Exception as e:
-                print(f"Errore nel caricamento del file {file_name}: {e}")
+                print(f"Error loading file {file_name}: {e}")
 
     if not images:
-        print("Nessuna immagine trovata nella cartella.")
+        print("No images found in the folder. Exiting.")
         return
 
     # Calcola le dimensioni dell'immagine finale
@@ -215,7 +220,7 @@ def create_concatenated_image_with_titles(input_folder, output_image):
         font_path = "/content/AnomalySegmentation/eval/Helvetica.ttc"  # Percorso del font Helvetica
         font = ImageFont.truetype(font_path, font_size)
     except IOError:
-        print(f"Font non trovato al percorso {font_path}. Uso il font predefinito.")
+        print(f"Font not found. Using default font.")
         font = ImageFont.load_default()
 
     # Posiziona le immagini e i titoli
@@ -238,14 +243,14 @@ def create_concatenated_image_with_titles(input_folder, output_image):
             concatenated_image.paste(img, (x_offset, font_size + title_margin))  # Maggiore margine sotto il testo
             x_offset += img.width
         except Exception as e:
-            print(f"Errore nel posizionamento del titolo o immagine {title}: {e}")
+            print(f"Error processing image {title}: {e}")
 
     # Salva l'immagine concatenata
     try:
         concatenated_image.save(output_image)
-        print(f"Immagine concatenata salvata come {output_image}")
+        print(f"Image saved as {output_image}")
     except Exception as e:
-        print(f"Errore nel salvataggio dell'immagine finale: {e}")
+        print(f"Error saving image: {e}")
 
 
 
