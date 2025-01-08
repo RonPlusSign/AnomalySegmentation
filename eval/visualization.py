@@ -159,6 +159,7 @@ def plot_barcode(preds, labels, title="Barcode plot", save_path=None, file_name=
     else:
         plt.show()
 
+
 def create_concatenated_image_with_titles(input_folder, output_image):
     # Dimensione del font ingrandita
     font_size = 200  # Aumenta la dimensione del font per renderlo più visibile
@@ -218,14 +219,9 @@ def create_concatenated_image_with_titles(input_folder, output_image):
     x_offset = 0
     for img, title in zip(images, titles):
         try:
-            if font.getsize:
-                # Usa `getsize` per calcolare la larghezza e altezza del testo per il font predefinito
-                text_width, text_height = draw.textsize(title, font=font)
-            else:
-                # In caso di fallback del font
-                bbox = draw.textbbox((0, 0), title, font=font)
-                text_width, text_height = bbox[2] - bbox[0], bbox[3] - bbox[1]
-            
+            # Usa `textsize` per calcolare le dimensioni del testo
+            text_width, text_height = draw.textsize(title, font=font)
+
             # Centra il testo rispetto all'immagine
             text_x = x_offset + (img.width - text_width) // 2
             text_y = 10  # Margine superiore per il testo
@@ -243,6 +239,7 @@ def create_concatenated_image_with_titles(input_folder, output_image):
         print(f"Immagine concatenata salvata come {output_image}")
     except Exception as e:
         print(f"Errore nel salvataggio dell'immagine finale: {e}")
+
 
 
 def main():
