@@ -5,6 +5,9 @@ from sklearn.metrics import auc, precision_recall_curve, roc_curve
 from ood_metrics import aupr, auroc, fpr_at_95_tpr
 import cv2
 
+from PIL import Image, ImageDraw, ImageFont
+import os
+
 def generate_colormap():
     """ Generate a colormap that gradually goes from blue to white to red """
 
@@ -153,3 +156,67 @@ def plot_barcode(preds, labels, title="Barcode plot", save_path=None, file_name=
         plt.savefig(f"{save_path}/{file_name}_barcode_plot.png")
     else:
         plt.show()
+
+def create_concatenated_image_with_titles(input_folder, output_image):
+    # Assicurati che il font sia disponibile sul tuo sistema
+    font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+    font_size = 20
+
+    images = []
+    titles = []
+
+    for file_name in sorted(os.listdir(input_folder)):
+        file_path = os.path.join(input_folder, file_name)
+        if os.path.isfile(file_path):
+            # Converti "Image.jpg" in PNG e fai resize
+            if file_name.lower() == "image.jpg":
+                with Image.open(file_path) as img:
+                    img = img.convert("RGBA")
+                    img = img.resize((512, 1024))
+                    new_file_path = os.path.join(input_folder, "image.png")
+                    img.save(new_file_path, "PNG")
+                    images.append(img)
+                    titles.append(os.path.splitext(file_name)[0])
+            elif file_name.lower().endswith(".png"):
+                with Image.open(file_path) as img:
+                    images.append(img)
+                    titles.append(os.path.splitext(file_name)[0])
+
+    if not images:
+        print("Nessuna immagine trovata nella cartella.")
+        return
+
+    # Calcola le dimensioni dell'immagine finale
+    width = sum(img.width for img in images)
+    height = max(img.height for img in images) + font_size + 10
+
+    # Crea una nuova immagine vuota
+    concatenated_image = Image.new("RGBA", (width, height), "white")
+    draw = ImageDraw.Draw(concatenated_image)
+
+    # Carica il font
+    try:
+        font = ImageFont.truetype(font_path, font_size)
+    except IOError:
+        print("Font non trovato, usa un font predefinito.")
+        font = ImageFont.load_default()
+
+    # Posiziona le immagini e i titoli
+    x_offset = 0
+    for img, title in zip(images, titles):
+        # Disegna il titolo sopra l'immagine
+        text_width, text_height = draw.textsize(title, font=font)
+        text_x = x_offset + (img.width - text_width) // 2
+        text_y = 5
+        draw.text((text_x, text_y), title, fill="black", font=font)
+
+        # Aggiungi l'immagine
+        concatenated_image.paste(img, (x_offset, font_size + 10))
+        x_offset += img.width
+
+    # Salva l'immagine concatenata
+    concatenated_image.save(output_image)
+    print(f"Immagine concatenata salvata come {output_image}")
+
+# Esempio di utilizzo
+create_concatenated_image_with_titles("baselines", "output.png")
