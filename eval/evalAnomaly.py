@@ -94,7 +94,7 @@ def main():
     parser.add_argument('--method',default="MSP") #can be MSP or MaxLogit or MaxEntropy or Mahalanobis
     parser.add_argument('--void', action='store_true')
     parser.add_argument('--temperature', default=0) # add the path of the model absolute path
-    parser.add_argument('--save-colored-dir', type=str, default=None, help='Directory where to save the image as colored score. Empty: do not save')
+    parser.add_argument('--save-colored', type=str, default=None, help='Path where to save the image as colored score. Empty: do not save')
     parser.add_argument('--save-plots-dir', type=str, default=None, help='Directory where to save ROC and PR curves. Empty: do not save')
 
     args = parser.parse_args()
@@ -271,22 +271,29 @@ def main():
         plot_pr(val_out, val_label, title=f"PR curve (FPR@TPR95 = {fpr*100:.2f}%)", save_path=args.save_plots_dir, file_name=f"{args.model}_{args.method}_PR_curve")
         plot_barcode(val_out, val_label, save_path=args.save_plots_dir, file_name=f"{args.model}_{args.method}_barcode")
     
-    # Save the colored score images
-    if args.save_colored_dir:
-        os.makedirs(args.save_colored_dir, exist_ok=True) # Create the directory if it does not exist
-        for i, path in enumerate(glob.glob(os.path.expanduser(str(args.input)))):
-            file_name = os.path.splitext(os.path.basename(path))[0]
-            save_colored_score_image(path, anomaly_score_list[i], save_path=args.save_colored_dir, file_name=file_name)
-            # save also the corresponding label mask
-            pathGT = path.replace("images", "labels_masks")
-            if "RoadObsticle21" in pathGT:
-                pathGT = pathGT.replace("webp", "png")
-            if "fs_static" in pathGT:
-                pathGT = pathGT.replace("jpg", "png")
-            if "RoadAnomaly" in pathGT:
-                pathGT = pathGT.replace("jpg", "png")
-            save_colored_score_image(pathGT, ood_gts_list[i], save_path=args.save_colored_dir, file_name=file_name+"_gt")
-            
+    # Save the colored score of the first image
+    if args.save_colored:
+        path = glob.glob(os.path.expanduser(str(args.input)))[0] # First image path
+        file_name = osp.splitext(osp.basename(path))[0]
+        save_dir = osp.dirname(args.save_colored)
+        os.makedirs(save_dir, exist_ok=True) # Create the directory if it does not exist
+        save_colored_score_image(path, anomaly_score_list[0], save_path=args.save_colored, file_name=file_name)
+
+        # save also the corresponding label mask
+        pathGT = path.replace("images", "labels_masks")
+        if "RoadObsticle21" in pathGT:
+            pathGT = pathGT.replace("webp", "png")
+        if "fs_static" in pathGT:
+            pathGT = pathGT.replace("jpg", "png")
+        if "RoadAnomaly" in pathGT:
+            pathGT = pathGT.replace("jpg", "png")
+        save_colored_score_image(pathGT, ood_gts_list[0], save_path=save_dir, file_name="ground_truth")
+        
+        # Copy also the original image, cropped to the same size
+        image = cv2.imread(path)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image = cv2.resize(image, (anomaly_score_list[0].shape[1], anomaly_score_list[0].shape[0]))
+        cv2.imwrite(f"{save_dir}/image.png", cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
 
 if __name__ == '__main__':
     main()
