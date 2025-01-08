@@ -274,8 +274,8 @@ def main():
     # Save the colored score of the first image
     if args.save_colored:
         path = glob.glob(os.path.expanduser(str(args.input)))[0] # First image path
-        file_name = osp.splitext(osp.basename(path))[0]
-        save_dir = osp.dirname(args.save_colored)
+        file_name = osp.splitext(osp.basename(args.save_colored))[0] # File name without extension
+        save_dir = osp.dirname(args.save_colored) # Directory where to save the image
         os.makedirs(save_dir, exist_ok=True) # Create the directory if it does not exist
         save_colored_score_image(path, anomaly_score_list[0], save_path=save_dir, file_name=file_name)
 
