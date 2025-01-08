@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.metrics import auc, precision_recall_curve, roc_curve
+import random
 
 from ood_metrics import aupr, auroc, fpr_at_95_tpr
 import cv2
@@ -159,47 +160,48 @@ def plot_barcode(preds, labels, title="Barcode plot", save_path=None, file_name=
     else:
         plt.show()
 
-from PIL import Image, ImageDraw, ImageFont
-import os
 
 def create_concatenated_image_with_titles(input_folder, output_image):
-    font_size = 90 # font size
-    title_margin = 50  # margin under the title
+    font_size = 90  # Font size
+    title_margin = 50  # Margin under the title
 
     images = []
     titles = []
 
-    # Order the files in the folder 
-    sorted_files = sorted(os.listdir(input_folder), key=lambda x: (x.lower() != "image.jpg", x.lower() != "ground_truth.png", x.lower()))
+    # Order the files in the folder
+    sorted_files = sorted(os.listdir(input_folder), key=lambda x: x.lower())
 
-    seen_files = set()  # acoid duplicates
+    seen_files = set()  # Avoid duplicates
 
-    for file_name in sorted_files:
+    # Ensure specific order for "image.png" and "ground_truth.png"
+    priority_files = ["image.png", "ground_truth.png"]
+    other_files = [f for f in sorted_files if f.lower() not in priority_files]
+    random.shuffle(other_files)
+    ordered_files = priority_files + other_files
+
+    for file_name in ordered_files:
         file_path = os.path.join(input_folder, file_name)
         if os.path.isfile(file_path):
             try:
-                # Convert image.jpg to image.png and resize it
-                if file_name.lower() == "image.jpg" and "image" not in seen_files:
-                    with Image.open(file_path) as img:
-                        img = img.convert("RGBA")
-                        img = img.resize((1024, 512))
-                        new_file_path = os.path.join(input_folder, "image.png")
-                        img.save(new_file_path, "PNG")
-                        images.append(img)
-                        titles.append("Image")
-                        seen_files.add("image")
-                elif file_name.lower().endswith(".png") and os.path.splitext(file_name)[0] not in seen_files:
-                    with Image.open(file_path) as img:
-                        img = img.convert("RGBA")
-                        images.append(img)
-                        # Titoli personalizzati
-                        base_title = os.path.splitext(file_name)[0].lower()
-                        if base_title == "ground_truth":
-                            titles.append("Ground Truth") 
-                        else:
-                            titles.append(base_title.capitalize()) # Capitalize the first letter
+                base_name, ext = os.path.splitext(file_name)
+                ext = ext.lower()
 
-                        seen_files.add(base_title)
+                if ext == ".png" and base_name.lower() not in seen_files:
+                    with Image.open(file_path) as img:
+                        img = img.convert("RGBA")
+
+                        if file_name.lower() == "image.png":
+                            images.append(img)
+                            titles.append("Image")
+                            seen_files.add("image")
+                        elif file_name.lower() == "ground_truth.png":
+                            images.append(img)
+                            titles.append("Ground Truth")
+                            seen_files.add("ground_truth")
+                        else:
+                            images.append(img)
+                            titles.append(base_name)  # Exact name of the file without extension
+                            seen_files.add(base_name.lower())
             except Exception as e:
                 print(f"Error loading file {file_name}: {e}")
 
@@ -207,45 +209,45 @@ def create_concatenated_image_with_titles(input_folder, output_image):
         print("No images found in the folder. Exiting.")
         return
 
-    # Calcola le dimensioni dell'immagine finale
+    # Calculate the dimensions of the final image
     width = sum(img.width for img in images)
     height = max(img.height for img in images) + font_size + title_margin + 20
 
-    # Crea una nuova immagine vuota
+    # Create a new blank image
     concatenated_image = Image.new("RGBA", (width, height), "white")
     draw = ImageDraw.Draw(concatenated_image)
 
-    # Carica il font
+    # Load the font
     try:
-        font_path = "/content/AnomalySegmentation/eval/Helvetica.ttc"  # Percorso del font Helvetica
+        font_path = "/content/AnomalySegmentation/eval/Helvetica.ttc"  # Path to Helvetica font
         font = ImageFont.truetype(font_path, font_size)
     except IOError:
-        print(f"Font not found. Using default font.")
+        print("Font not found. Using default font.")
         font = ImageFont.load_default()
 
-    # Posiziona le immagini e i titoli
+    # Position images and titles
     x_offset = 0
     for img, title in zip(images, titles):
         try:
-            # Usa `textbbox` per calcolare le dimensioni del testo
-            if font != ImageFont.load_default():  # Usa il bounding box solo se non è il font di default
+            # Calculate text dimensions
+            if font != ImageFont.load_default():
                 bbox = draw.textbbox((0, 0), title, font=font)
                 text_width, text_height = bbox[2] - bbox[0], bbox[3] - bbox[1]
-            else:  # Font di default, dimensioni approssimative
+            else:
                 text_width, text_height = draw.textsize(title, font=font)
 
-            # Centra il testo rispetto all'immagine
+            # Center the text with respect to the image
             text_x = x_offset + (img.width - text_width) // 2
-            text_y = 10  # Margine superiore per il testo
+            text_y = 10  # Top margin for the text
             draw.text((text_x, text_y), title, fill="black", font=font)
 
-            # Aggiungi l'immagine
-            concatenated_image.paste(img, (x_offset, font_size + title_margin))  # Maggiore margine sotto il testo
+            # Add the image
+            concatenated_image.paste(img, (x_offset, font_size + title_margin))
             x_offset += img.width
         except Exception as e:
             print(f"Error processing image {title}: {e}")
 
-    # Salva l'immagine concatenata
+    # Save the concatenated image
     try:
         concatenated_image.save(output_image)
         print(f"Image saved as {output_image}")
