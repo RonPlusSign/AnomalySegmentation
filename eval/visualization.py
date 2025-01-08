@@ -162,6 +162,9 @@ def plot_barcode(preds, labels, title="Barcode plot", save_path=None, file_name=
 from PIL import Image, ImageDraw, ImageFont
 import os
 
+from PIL import Image, ImageDraw, ImageFont
+import os
+
 def create_concatenated_image_with_titles(input_folder, output_image):
     # Assicurati che il font sia disponibile sul tuo sistema
     font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
@@ -173,19 +176,23 @@ def create_concatenated_image_with_titles(input_folder, output_image):
     for file_name in sorted(os.listdir(input_folder)):
         file_path = os.path.join(input_folder, file_name)
         if os.path.isfile(file_path):
-            # Converti "Image.jpg" in PNG e fai resize
-            if file_name.lower() == "image.jpg":
-                with Image.open(file_path) as img:
-                    img = img.convert("RGBA")
-                    img = img.resize((512, 1024))
-                    new_file_path = os.path.join(input_folder, "image.png")
-                    img.save(new_file_path, "PNG")
-                    images.append(img)
-                    titles.append(os.path.splitext(file_name)[0])
-            elif file_name.lower().endswith(".png"):
-                with Image.open(file_path) as img:
-                    images.append(img)
-                    titles.append(os.path.splitext(file_name)[0])
+            try:
+                # Converti "Image.jpg" in PNG e fai resize
+                if file_name.lower() == "image.jpg":
+                    with Image.open(file_path) as img:
+                        img = img.convert("RGBA")
+                        img = img.resize((512, 1024))
+                        new_file_path = os.path.join(input_folder, "image.png")
+                        img.save(new_file_path, "PNG")
+                        images.append(img)
+                        titles.append(os.path.splitext(file_name)[0])
+                elif file_name.lower().endswith(".png"):
+                    with Image.open(file_path) as img:
+                        img = img.convert("RGBA")
+                        images.append(img)
+                        titles.append(os.path.splitext(file_name)[0])
+            except Exception as e:
+                print(f"Errore nel caricamento del file {file_name}: {e}")
 
     if not images:
         print("Nessuna immagine trovata nella cartella.")
@@ -210,19 +217,25 @@ def create_concatenated_image_with_titles(input_folder, output_image):
     x_offset = 0
     for img, title in zip(images, titles):
         # Calcola le dimensioni del testo usando textbbox
-        bbox = draw.textbbox((0, 0), title, font=font)
-        text_width, text_height = bbox[2] - bbox[0], bbox[3] - bbox[1]
-        text_x = x_offset + (img.width - text_width) // 2
-        text_y = 5
-        draw.text((text_x, text_y), title, fill="black", font=font)
+        try:
+            bbox = draw.textbbox((0, 0), title, font=font)
+            text_width, text_height = bbox[2] - bbox[0], bbox[3] - bbox[1]
+            text_x = x_offset + (img.width - text_width) // 2
+            text_y = 5
+            draw.text((text_x, text_y), title, fill="black", font=font)
 
-        # Aggiungi l'immagine
-        concatenated_image.paste(img, (x_offset, font_size + 10))
-        x_offset += img.width
+            # Aggiungi l'immagine
+            concatenated_image.paste(img, (x_offset, font_size + 10))
+            x_offset += img.width
+        except Exception as e:
+            print(f"Errore nel posizionamento del titolo o immagine {title}: {e}")
 
     # Salva l'immagine concatenata
-    concatenated_image.save(output_image)
-    print(f"Immagine concatenata salvata come {output_image}")
+    try:
+        concatenated_image.save(output_image)
+        print(f"Immagine concatenata salvata come {output_image}")
+    except Exception as e:
+        print(f"Errore nel salvataggio dell'immagine finale: {e}")
 
 
 def main():
