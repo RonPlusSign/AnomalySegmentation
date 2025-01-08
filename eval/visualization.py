@@ -159,10 +159,11 @@ def plot_barcode(preds, labels, title="Barcode plot", save_path=None, file_name=
     else:
         plt.show()
 
+
 def create_concatenated_image_with_titles(input_folder, output_image):
     # Assicurati che il font sia disponibile sul tuo sistema
     font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-    font_size = 80  # Aumenta la dimensione del font in modo significativo
+    font_size = 60  # Imposta la dimensione desiderata del font
 
     images = []
     titles = []
@@ -201,7 +202,7 @@ def create_concatenated_image_with_titles(input_folder, output_image):
 
     # Calcola le dimensioni dell'immagine finale
     width = sum(img.width for img in images)
-    height = max(img.height for img in images) + font_size + 20
+    height = max(img.height for img in images) + font_size + 40
 
     # Crea una nuova immagine vuota
     concatenated_image = Image.new("RGBA", (width, height), "white")
@@ -212,21 +213,23 @@ def create_concatenated_image_with_titles(input_folder, output_image):
         font = ImageFont.truetype(font_path, font_size)
     except IOError:
         print("Font non trovato, usa un font predefinito.")
-        font = ImageFont.load_default()
+        font = None
 
     # Posiziona le immagini e i titoli
     x_offset = 0
     for img, title in zip(images, titles):
-        # Calcola le dimensioni del testo usando textbbox
+        # Calcola le dimensioni del testo
         try:
-            bbox = draw.textbbox((0, 0), title, font=font)
-            text_width, text_height = bbox[2] - bbox[0], bbox[3] - bbox[1]
+            if font:
+                text_width, text_height = draw.textsize(title, font=font)
+            else:
+                text_width, text_height = draw.textsize(title)
             text_x = x_offset + (img.width - text_width) // 2
-            text_y = 10  # Margine superiore per il testo
-            draw.text((text_x, text_y), title, fill="black", font=font)
+            text_y = 20  # Margine superiore per il testo
+            draw.text((text_x, text_y), title, fill="black", font=font if font else None)
 
             # Aggiungi l'immagine
-            concatenated_image.paste(img, (x_offset, font_size + 20))
+            concatenated_image.paste(img, (x_offset, font_size + 40))
             x_offset += img.width
         except Exception as e:
             print(f"Errore nel posizionamento del titolo o immagine {title}: {e}")
@@ -237,7 +240,6 @@ def create_concatenated_image_with_titles(input_folder, output_image):
         print(f"Immagine concatenata salvata come {output_image}")
     except Exception as e:
         print(f"Errore nel salvataggio dell'immagine finale: {e}")
-
 
 
 def main():
