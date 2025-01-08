@@ -212,7 +212,7 @@ def create_concatenated_image_with_titles(input_folder, output_image):
 
     # Carica il font
     try:
-        font_path = "/System/Library/Fonts/Supplemental/Helvetica.ttc"  # Percorso del font Helvetica
+        font_path = "/System/Library/Fonts/Helvetica.ttc"  # Percorso del font Helvetica
         font = ImageFont.truetype(font_path, font_size)
     except IOError:
         print(f"Font non trovato al percorso {font_path}. Uso il font predefinito.")
