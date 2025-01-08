@@ -277,6 +277,16 @@ def main():
         for i, path in enumerate(glob.glob(os.path.expanduser(str(args.input)))):
             file_name = os.path.splitext(os.path.basename(path))[0]
             save_colored_score_image(path, anomaly_score_list[i], save_path=args.save_colored_dir, file_name=file_name)
+            # save also the corresponding label mask
+            pathGT = path.replace("images", "labels_masks")
+            if "RoadObsticle21" in pathGT:
+                pathGT = pathGT.replace("webp", "png")
+            if "fs_static" in pathGT:
+                pathGT = pathGT.replace("jpg", "png")
+            if "RoadAnomaly" in pathGT:
+                pathGT = pathGT.replace("jpg", "png")
+            save_colored_score_image(pathGT, ood_gts_list[i], save_path=args.save_colored_dir, file_name=file_name+"_gt")
+            
 
 if __name__ == '__main__':
     main()
