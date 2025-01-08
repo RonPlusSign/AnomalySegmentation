@@ -159,11 +159,9 @@ def plot_barcode(preds, labels, title="Barcode plot", save_path=None, file_name=
     else:
         plt.show()
 
-
 def create_concatenated_image_with_titles(input_folder, output_image):
-    # Assicurati che il font sia disponibile sul tuo sistema
-    font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-    font_size = 60  # Imposta la dimensione desiderata del font
+    # Dimensione del font ingrandita
+    font_size = 200  # Aumenta la dimensione del font per renderlo più visibile
 
     images = []
     titles = []
@@ -202,7 +200,7 @@ def create_concatenated_image_with_titles(input_folder, output_image):
 
     # Calcola le dimensioni dell'immagine finale
     width = sum(img.width for img in images)
-    height = max(img.height for img in images) + font_size + 40
+    height = max(img.height for img in images) + font_size + 50  # Aumenta lo spazio verticale per il titolo
 
     # Crea una nuova immagine vuota
     concatenated_image = Image.new("RGBA", (width, height), "white")
@@ -210,26 +208,31 @@ def create_concatenated_image_with_titles(input_folder, output_image):
 
     # Carica il font
     try:
+        font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
         font = ImageFont.truetype(font_path, font_size)
     except IOError:
-        print("Font non trovato, usa un font predefinito.")
-        font = None
+        print("Font non trovato, uso il font predefinito.")
+        font = ImageFont.load_default()
 
     # Posiziona le immagini e i titoli
     x_offset = 0
     for img, title in zip(images, titles):
-        # Calcola le dimensioni del testo
         try:
-            if font:
+            if font.getsize:
+                # Usa `getsize` per calcolare la larghezza e altezza del testo per il font predefinito
                 text_width, text_height = draw.textsize(title, font=font)
             else:
-                text_width, text_height = draw.textsize(title)
+                # In caso di fallback del font
+                bbox = draw.textbbox((0, 0), title, font=font)
+                text_width, text_height = bbox[2] - bbox[0], bbox[3] - bbox[1]
+            
+            # Centra il testo rispetto all'immagine
             text_x = x_offset + (img.width - text_width) // 2
-            text_y = 20  # Margine superiore per il testo
-            draw.text((text_x, text_y), title, fill="black", font=font if font else None)
+            text_y = 10  # Margine superiore per il testo
+            draw.text((text_x, text_y), title, fill="black", font=font)
 
             # Aggiungi l'immagine
-            concatenated_image.paste(img, (x_offset, font_size + 40))
+            concatenated_image.paste(img, (x_offset, font_size + 50))  # Margine maggiore sotto il testo
             x_offset += img.width
         except Exception as e:
             print(f"Errore nel posizionamento del titolo o immagine {title}: {e}")
