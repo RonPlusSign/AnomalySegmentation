@@ -185,7 +185,7 @@ def train(args, model, enc=False):
         best_acc = checkpoint['best_acc']
         print("=> Loaded checkpoint at epoch {})".format(checkpoint['epoch']))
 
-    if args.FineTune:
+    '''if args.FineTune:
         # Freeze all layers except the last one
         for param in model.parameters():
             param.requires_grad = False
@@ -198,7 +198,7 @@ def train(args, model, enc=False):
                 param.requires_grad = True
         else: #enet
             for param in model.module.transposed_conv.parameters():
-                param.requires_grad = True
+                param.requires_grad = True'''
 
     # Define the optimizer  
     if args.model == "erfnet" or args.model == "erfnet_isomaxplus":
