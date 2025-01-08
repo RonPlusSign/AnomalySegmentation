@@ -162,30 +162,24 @@ def plot_barcode(preds, labels, title="Barcode plot", save_path=None, file_name=
 from PIL import Image, ImageDraw, ImageFont
 import os
 
-from PIL import Image, ImageDraw, ImageFont
-import os
-
 def create_concatenated_image_with_titles(input_folder, output_image):
-    # Dimensione del font desiderata
-    font_size = 80  # Non cambiare, funziona solo con il font trovato
-    default_font_scale = 5  # Scala per testo con font predefinito
-    title_margin = 30  # Margine aggiuntivo tra titolo e immagine
+    # Imposta una dimensione del font grande
+    font_size = 300  # Dimensione molto più grande
+    title_margin = 50  # Margine extra sotto il testo
 
     images = []
     titles = []
 
-    # Ordina le immagini
-    sorted_files = sorted(
-        os.listdir(input_folder),
-        key=lambda x: (x.lower() != "image.jpg", x.lower() != "ground_truth.png", x.lower()),
-    )
+    # Ordina le immagini: "image" davanti, seguita da "ground_truth", poi le altre
+    sorted_files = sorted(os.listdir(input_folder), key=lambda x: (x.lower() != "image.jpg", x.lower() != "ground_truth.png", x.lower()))
 
-    seen_files = set()
+    seen_files = set()  # Per evitare duplicati
 
     for file_name in sorted_files:
         file_path = os.path.join(input_folder, file_name)
         if os.path.isfile(file_path):
             try:
+                # Converti "Image.jpg" in PNG e fai resize inverso (1024x512 invece di 512x1024)
                 if file_name.lower() == "image.jpg" and "image" not in seen_files:
                     with Image.open(file_path) as img:
                         img = img.convert("RGBA")
@@ -208,57 +202,45 @@ def create_concatenated_image_with_titles(input_folder, output_image):
         print("Nessuna immagine trovata nella cartella.")
         return
 
-    # Calcola la dimensione finale
+    # Calcola le dimensioni dell'immagine finale
     width = sum(img.width for img in images)
-    height = max(img.height for img in images) + font_size * default_font_scale + title_margin + 20
+    height = max(img.height for img in images) + font_size + title_margin + 20
 
+    # Crea una nuova immagine vuota
     concatenated_image = Image.new("RGBA", (width, height), "white")
     draw = ImageDraw.Draw(concatenated_image)
 
     # Carica il font
     try:
-        font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+        font_path = "/System/Library/Fonts/Supplemental/Helvetica.ttc"  # Percorso del font Helvetica
         font = ImageFont.truetype(font_path, font_size)
-        is_custom_font = True
     except IOError:
-        print("Font non trovato, uso il font predefinito.")
+        print(f"Font non trovato al percorso {font_path}. Uso il font predefinito.")
         font = ImageFont.load_default()
-        is_custom_font = False
 
     # Posiziona le immagini e i titoli
     x_offset = 0
     for img, title in zip(images, titles):
         try:
-            # Dimensione testo (bounding box)
-            if is_custom_font:
+            # Usa `textbbox` per calcolare le dimensioni del testo
+            if font != ImageFont.load_default():  # Usa il bounding box solo se non è il font di default
                 bbox = draw.textbbox((0, 0), title, font=font)
                 text_width, text_height = bbox[2] - bbox[0], bbox[3] - bbox[1]
-            else:
-                # Font predefinito: dimensioni manuali ingrandite
+            else:  # Font di default, dimensioni approssimative
                 text_width, text_height = draw.textsize(title, font=font)
-                text_width *= default_font_scale
-                text_height *= default_font_scale
 
-            # Centrare il testo sopra l'immagine
+            # Centra il testo rispetto all'immagine
             text_x = x_offset + (img.width - text_width) // 2
-            text_y = 10
+            text_y = 10  # Margine superiore per il testo
+            draw.text((text_x, text_y), title, fill="black", font=font)
 
-            if not is_custom_font:
-                # Disegna testo manualmente più grande replicandolo
-                for dx in range(-default_font_scale, default_font_scale + 1):
-                    for dy in range(-default_font_scale, default_font_scale + 1):
-                        draw.text((text_x + dx, text_y + dy), title, fill="black", font=font)
-            else:
-                # Disegna titolo con font personalizzato
-                draw.text((text_x, text_y), title, fill="black", font=font)
-
-            # Posiziona l'immagine
-            concatenated_image.paste(img, (x_offset, font_size * default_font_scale + title_margin))
+            # Aggiungi l'immagine
+            concatenated_image.paste(img, (x_offset, font_size + title_margin))  # Maggiore margine sotto il testo
             x_offset += img.width
         except Exception as e:
             print(f"Errore nel posizionamento del titolo o immagine {title}: {e}")
 
-    # Salva il risultato
+    # Salva l'immagine concatenata
     try:
         concatenated_image.save(output_image)
         print(f"Immagine concatenata salvata come {output_image}")
