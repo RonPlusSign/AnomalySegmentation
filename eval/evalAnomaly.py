@@ -277,7 +277,7 @@ def main():
         file_name = osp.splitext(osp.basename(path))[0]
         save_dir = osp.dirname(args.save_colored)
         os.makedirs(save_dir, exist_ok=True) # Create the directory if it does not exist
-        save_colored_score_image(path, anomaly_score_list[0], save_path=args.save_colored, file_name=file_name)
+        save_colored_score_image(path, anomaly_score_list[0], save_path=save_dir, file_name=file_name)
 
         # save also the corresponding label mask
         pathGT = path.replace("images", "labels_masks")
