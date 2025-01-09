@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from cross_entropy_loss import CrossEntropyLoss2d
-from focal_loss import FocalLoss 
+from train.losses.cross_entropy_loss import CrossEntropyLoss2d
+from train.losses.focal_loss import FocalLoss
 
 # Code from: https://github.com/hongxin001/logitnorm_ood/blob/main/common/loss_function.py
 # Paper: https://arxiv.org/pdf/2205.09310

@@ -138,11 +138,13 @@ def train(args, model, enc=False):
     elif args.model == "erfnet":
         if args.loss == "IsoMaxPlus":
             raise ValueError("To use IsoMaxPlus loss, please use the erfnet_isomaxplus model")
-        if args.loss == "Focal":
-            criterion = FocalLoss() 
+        
+        if args.loss == "Focal": # choose the loss function
+            criterion = FocalLoss()
         else:
             criterion = CrossEntropyLoss2d(weight) 
-        if args.logit_normalization:
+        
+        if args.logit_normalization: # apply logit normalization before the loss
             criterion = LogitNormLoss(t=1.0, loss=criterion) # LogitNorm + Cross Entropy loss/Focal loss
     elif args.model == "bisenet":
         criterion_out = OhemCELoss(thresh=0.7) # principal loss
