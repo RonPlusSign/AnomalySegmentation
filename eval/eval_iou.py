@@ -49,7 +49,14 @@ def main(args):
     print ("Loading model: " + modelpath)
     print ("Loading weights: " + weightspath)
 
-    model = ERFNet(NUM_CLASSES)
+    if args.model == "erfnet":
+        model = ERFNet(NUM_CLASSES).to(device)
+    elif args.model == "erfnet_isomaxplus":
+        model = ERFNet(NUM_CLASSES, use_isomaxplus=True).to(device)
+    elif args.model =="enet":
+        model = ENet(NUM_CLASSES).to(device)
+    elif args.model == "bisenet":
+        model = BiSeNetV1(NUM_CLASSES).to(device)
 
     #model = torch.nn.DataParallel(model)
     if (not args.cpu):
