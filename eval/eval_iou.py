@@ -142,7 +142,7 @@ def main(args):
         
         
         if args.model == "bisenet":
-            result = outputs[0].squeeze(0)
+            result = outputs[0]
         else:
             result = outputs
 
