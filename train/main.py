@@ -142,7 +142,7 @@ def train(args, model, enc=False):
             criterion = FocalLoss() 
         else:
             criterion = CrossEntropyLoss2d(weight) 
-        if args.loss == "LogitNorm":
+        if args.logit_normalization:
             criterion = LogitNormLoss(t=1.0, loss=criterion) # LogitNorm + Cross Entropy loss/Focal loss
     elif args.model == "bisenet":
         criterion_out = OhemCELoss(thresh=0.7) # principal loss
@@ -599,7 +599,7 @@ if __name__ == '__main__':
     parser.add_argument('--pretrainedEncoder') #, default="../trained_models/erfnet_encoder_pretrained.pth.tar")
     parser.add_argument('--visualize', action='store_true')
     parser.add_argument('--loss', default="CrossEntropy") # values: ["CrossEntropy", "IsoMaxPlus", "LogitNorm", "Focal"]
-
+    parser.add_argument('--logit_normalization', action='store_true', default=False)
     parser.add_argument('--iouTrain', action='store_true', default=False) #recommended: False (takes more time to train otherwise)
     parser.add_argument('--iouVal', action='store_true', default=True)  
     parser.add_argument('--resume', action='store_true')    #Use this flag to load last checkpoint for training  
