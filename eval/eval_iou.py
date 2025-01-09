@@ -146,28 +146,12 @@ def main(args):
         else:
             result = outputs
 
-        '''if(method == "MaxLogit"):
-            anomaly_result = - np.max(result.squeeze(0).data.cpu().numpy(), axis=0)   
-        elif(method == "MaxEntropy"):
-
-            anomaly_result = torch.div(
-                    torch.sum(-F.softmax(result, dim=0) * F.log_softmax(result, dim=0), dim=0),
-                    torch.log(torch.tensor(result.size(0))),
-                )
-
-        else :#MSP
-            anomaly_result = 1.0 - torch.max(F.softmax(result , dim=0), dim=0)[0]'''
+       
          
 
-        #QUI finisce
+      
         iouEvalVal.addBatch(result.max(1)[1].unsqueeze(1).data, labels)
-        #ic(result)
-        #ic(anomaly_result)
-        #print("result result dtype:", result.dtype)
-        #print("result result shape:", result.shape)
-        #print("Anomaly result dtype:", anomaly_result.dtype)
-        #print("Anomaly result shape:", anomaly_result.shape)
-       #iouEvalVal.addBatch(anomaly_result.round().long().unsqueeze(1).data, labels)
+   
 
         filenameSave = filename[0].split("leftImg8bit/")[1] 
 
@@ -181,7 +165,7 @@ def main(args):
         iouStr = getColorEntry(iou_classes[i])+'{:0.2f}'.format(iou_classes[i]*100) + '\033[0m'
         iou_classes_str.append(iouStr)
 
-    print(f"-------------{method}-------------------")
+  
     print("---------------------------------------")
     print("Took ", time.time()-start, "seconds")
     print("=======================================")
