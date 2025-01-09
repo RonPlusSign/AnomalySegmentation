@@ -111,7 +111,7 @@ def main(args):
             else:
                 own_state[name].copy_(param)
         return model
-
+    weightspath = args.loadDir + args.loadWeights
     model = load_my_state_dict(model, torch.load(weightspath, map_location=lambda storage, loc: storage))
     print ("Model and weights LOADED successfully")
 
