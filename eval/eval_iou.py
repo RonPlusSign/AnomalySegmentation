@@ -25,6 +25,14 @@ from iouEval import iouEval, getColorEntry
 
 from icecream import ic
 
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+ERFNet = importlib.import_module('train.erfnet').ERFNet
+ENet = importlib.import_module('train.enet').ENet
+BiSeNetV1 = importlib.import_module('train.bisenet').BiSeNetV1
+
+
+
 NUM_CHANNELS = 3
 NUM_CLASSES = 20
 
@@ -212,5 +220,6 @@ if __name__ == '__main__':
     parser.add_argument('--batch-size', type=int, default=1)
     parser.add_argument('--cpu', action='store_true')
     parser.add_argument('--method',default="MSP") #can be MSP or MaxLogit or MaxEntropy
+    parser.add_argument('--model', default="erfnet") #can be erfnet, erfnet_isomaxplus, enet, bisenet
 
     main(parser.parse_args())
