@@ -130,20 +130,21 @@ def train(args, model, enc=False):
 
     # Define the criterion
     if args.model == "erfnet_isomaxplus":
-        if args.loss == "IsoMaxPlus":
-            criterion = IsoMaxPlusLossSecondPart()
+        if args.loss == "Focal":
+            criterion = FocalLoss() # IsomaxPlus loss + Focal loss
         else:
-            # raise an error
-            raise ValueError("For erfnet_isomaxplus, the loss must be IsoMaxPlus")
+            criterion = IsoMaxPlusLossSecondPart()  # IsoMaxPlus loss + Cross Entropy loss
     elif args.model == "erfnet":
         if args.loss == "IsoMaxPlus":
             raise ValueError("To use IsoMaxPlus loss, please use the erfnet_isomaxplus model")
-        elif args.loss == "LogitNorm":
-            criterion = LogitNormLoss()
-        elif args.loss == "Focal":
+        
+        if args.loss == "Focal": # choose the loss function
             criterion = FocalLoss()
         else:
-            criterion = CrossEntropyLoss2d(weight)
+            criterion = CrossEntropyLoss2d(weight) 
+        
+        if args.logit_normalization: # apply logit normalization before the loss
+            criterion = LogitNormLoss(t=1.0, loss=criterion) # LogitNorm + Cross Entropy loss/Focal loss
     elif args.model == "bisenet":
         criterion_out = OhemCELoss(thresh=0.7) # principal loss
         criterion_aux16 = OhemCELoss(thresh=0.7) # auxiliary loss for output16
@@ -599,7 +600,7 @@ if __name__ == '__main__':
     parser.add_argument('--pretrainedEncoder') #, default="../trained_models/erfnet_encoder_pretrained.pth.tar")
     parser.add_argument('--visualize', action='store_true')
     parser.add_argument('--loss', default="CrossEntropy") # values: ["CrossEntropy", "IsoMaxPlus", "LogitNorm", "Focal"]
-
+    parser.add_argument('--logit_normalization', action='store_true', default=False)
     parser.add_argument('--iouTrain', action='store_true', default=False) #recommended: False (takes more time to train otherwise)
     parser.add_argument('--iouVal', action='store_true', default=True)  
     parser.add_argument('--resume', action='store_true')    #Use this flag to load last checkpoint for training  
