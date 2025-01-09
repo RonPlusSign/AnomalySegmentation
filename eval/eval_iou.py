@@ -56,7 +56,7 @@ def main(args):
 
     print ("Loading model: " + modelpath)
     print ("Loading weights: " + weightspath)
-
+    device = torch.device('cuda' if torch.cuda.is_available() and not args.cpu else 'cpu')
     if args.model == "erfnet":
         model = ERFNet(NUM_CLASSES).to(device)
     elif args.model == "erfnet_isomaxplus":
