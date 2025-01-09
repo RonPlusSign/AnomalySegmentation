@@ -24,7 +24,7 @@ from transform import Relabel, ToLabel, Colorize
 from iouEval import iouEval, getColorEntry
 
 from icecream import ic
-
+import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 ERFNet = importlib.import_module('train.erfnet').ERFNet
