@@ -136,12 +136,16 @@ def main(args):
 
         inputs = Variable(images)
         with torch.no_grad():
+            
             outputs = model(inputs)
 
-        #QUI inizia la mia modifica
-        result = outputs
-
         
+        
+        if args.model == "bisenet":
+            result = outputs[0].squeeze(0)
+        else:
+            result = outputs
+
         if(method == "MaxLogit"):
             anomaly_result = - np.max(result.squeeze(0).data.cpu().numpy(), axis=0)   
         elif(method == "MaxEntropy"):
