@@ -146,7 +146,7 @@ def main(args):
         else:
             result = outputs
 
-        if(method == "MaxLogit"):
+        '''if(method == "MaxLogit"):
             anomaly_result = - np.max(result.squeeze(0).data.cpu().numpy(), axis=0)   
         elif(method == "MaxEntropy"):
 
@@ -156,7 +156,7 @@ def main(args):
                 )
 
         else :#MSP
-            anomaly_result = 1.0 - torch.max(F.softmax(result , dim=0), dim=0)[0]
+            anomaly_result = 1.0 - torch.max(F.softmax(result , dim=0), dim=0)[0]'''
          
 
         #QUI finisce
