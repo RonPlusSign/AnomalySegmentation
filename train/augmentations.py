@@ -29,7 +29,7 @@ class ERFNetTransform(object):
                 input = input.transpose(Image.FLIP_LEFT_RIGHT)
                 target = target.transpose(Image.FLIP_LEFT_RIGHT)
             
-            #Random translation 0-2 pixels (fill rest with padding
+            #Random translation 0-2 pixels (fill rest with padding)
             transX = random.randint(-2, 2) 
             transY = random.randint(-2, 2)
 
