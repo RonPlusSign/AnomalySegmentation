@@ -55,9 +55,38 @@ def main(args):
     if (not args.cpu):
         model = torch.nn.DataParallel(model).cuda()
 
-    def load_my_state_dict(model, state_dict):  #custom function to load model when not all dict elements
+    '''def load_my_state_dict(model, state_dict):  #custom function to load model when not all dict elements
         own_state = model.state_dict()
         for name, param in state_dict.items():
+            if name not in own_state:
+                if name.startswith("module."):
+                    own_state[name.split("module.")[-1]].copy_(param)
+                else:
+                    print(name, " not loaded")
+                    continue
+            else:
+                own_state[name].copy_(param)
+        return model'''
+    def load_my_state_dict(model, state_dict):  #custom function to load model when not all dict elements
+        own_state = model.state_dict()
+        print(state_dict.keys())
+        print(own_state.keys())
+        # Check if the model is 'erfnet_isomaxplus'and load the state dict for IsoMaxPlusLossFirstPart
+        if args.model == "erfnet_isomaxplus" and 'loss_first_part_state_dict' in state_dict:
+            # Get the state dict for IsoMaxPlusLossFirstPart
+            loss_first_part_state_dict = state_dict['loss_first_part_state_dict']
+            # Load the state dict for IsoMaxPlusLossFirstPart
+            if hasattr(model.module.decoder, 'loss_first_part'):
+                model.module.decoder.loss_first_part.load_state_dict(loss_first_part_state_dict)
+            else:
+                raise ValueError("IsoMaxPlusLossFirstPart not found in the model")
+
+        if 'state_dict' in state_dict:
+            load_dict = state_dict['state_dict'] 
+        else:
+            load_dict = state_dict
+
+        for name, param in load_dict.items():
             if name not in own_state:
                 if name.startswith("module."):
                     own_state[name.split("module.")[-1]].copy_(param)
