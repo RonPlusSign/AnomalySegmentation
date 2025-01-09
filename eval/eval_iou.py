@@ -160,7 +160,7 @@ def main(args):
          
 
         #QUI finisce
-        iouEvalVal.addBatch(outputs.max(1)[1].unsqueeze(1).data, labels)
+        iouEvalVal.addBatch(result.max(1)[1].unsqueeze(1).data, labels)
         #ic(result)
         #ic(anomaly_result)
         #print("result result dtype:", result.dtype)
