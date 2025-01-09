@@ -130,11 +130,10 @@ def train(args, model, enc=False):
 
     # Define the criterion
     if args.model == "erfnet_isomaxplus":
-        if args.loss == "IsoMaxPlus":
-            criterion = IsoMaxPlusLossSecondPart()  # IsoMaxPlus loss + Cross Entropy loss
+        if args.loss == "Focal":
+            criterion = FocalLoss() # IsomaxPlus loss + Focal loss
         else:
-            # raise an error
-            raise ValueError("For erfnet_isomaxplus, the loss must be IsoMaxPlus")
+            criterion = IsoMaxPlusLossSecondPart()  # IsoMaxPlus loss + Cross Entropy loss
     elif args.model == "erfnet":
         if args.loss == "IsoMaxPlus":
             raise ValueError("To use IsoMaxPlus loss, please use the erfnet_isomaxplus model")
