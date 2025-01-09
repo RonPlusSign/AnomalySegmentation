@@ -139,8 +139,8 @@ def main():
             else:
                 raise ValueError("IsoMaxPlusLossFirstPart not found in the model")
 
-        if args.model == "erfnet_isomaxplus":
-            load_dict = state_dict['state_dict']  # for IsoMaxPlusLossFirstPart, the state dict is in 'state_dict'
+        if 'state_dict' in state_dict:
+            load_dict = state_dict['state_dict'] 
         else:
             load_dict = state_dict
 
