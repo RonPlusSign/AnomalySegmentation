@@ -85,10 +85,13 @@ class ENetTransform(object):
         self.label_transform = tt.Compose([Resize((self.height, self.width), Image.NEAREST), tt.ToTensor()])
     
     def __call__(self, input, target):
-        input = self.image_transform(input)
-        target = self.label_transform(target)
-
-        target = ToLabel()(target).squeeze(1)
+        #input = self.image_transform(input)
+        #target = self.label_transform(target)
+        input =  tt.Resize(self.height, Image.BILINEAR)(input)
+        target = tt.Resize(self.height, Image.NEAREST)(target)
+        
+        input = tt.ToTensor()(input)
+        target = ToLabel()(target)#.squeeze(1)
         target = Relabel(255, 19)(target)
         return input, target
 
