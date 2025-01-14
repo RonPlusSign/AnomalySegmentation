@@ -122,7 +122,7 @@ Key insights:
 
 If you use this repository, please cite our work:
 ```
-@inproceedings{delli2025anomalysegmentation,
+@inproceedings{delli_modi_dellisanti2025anomalysegmentation,
   title={Real-Time Anomaly Segmentation for Road Scenes},
   author={Delli, Andrea and Dellisanti, Christian and Modi, Giorgia},
   year={2025},
