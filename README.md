@@ -1,6 +1,6 @@
 # Real-Time Anomaly Segmentation for Road Scenes
 
-This repository contains the code for the project **Real-Time Anomaly Segmentation for Road Scenes**, conducted as part of the Advanced Machine Learning course at Politecnico di Torino. The project explores the application of deep learning models for real-time per-pixel anomaly detection in road scenes.
+This repository contains the code for the project **Real-Time Anomaly Segmentation for Road Scenes**, conducted as part of the Advanced Machine Learning course 2024/2025 at Politecnico di Torino. The project explores the application of deep learning models for real-time per-pixel anomaly detection in road scenes.
 
 This repository was built using the base code from [AnomalySegmentation_CourseProjectBaseCode](https://github.com/shyam671/AnomalySegmentation_CourseProjectBaseCode) as a foundation. Enhancements and modifications were made to improve the functionality and adapt it to specific project requirements.
 
