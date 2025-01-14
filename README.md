@@ -39,7 +39,10 @@ This visual comparison showcases the anomaly segmentation results using **MSP** 
 
 1. **Datasets**:
    - [Cityscapes dataset](https://www.cityscapes-dataset.com/): Download "leftImg8bit" for RGB images and "gtFine" for labels. Convert labels to `_labelTrainIds` using the [Cityscapes conversion script](https://github.com/mcordts/cityscapesScripts/blob/master/cityscapesscripts/preparation/createTrainIdLabelImgs.py).
-   - Testing datasets: Download RoadAnomaly, Fishyscapes, and other benchmarks [here](https://drive.google.com/drive/folders/1eQhmPbKSZrN1AsieY9KFchfll7XC1_SF).
+   - Testing datasets:
+     - [Segment Me If You Can (RoaDAnomaly21, RoadObstacle21)](https://segmentmeifyoucan.com/datasets)
+     - [Fishyscapes (FS Static, FS Lost&Found)](https://fishyscapes.com/dataset)
+     - [Road Anomaly](https://www.epfl.ch/labs/cvlab/data/road-anomaly/)
 2. **Environment**:
    - Python 3.6
    - [PyTorch](https://pytorch.org/) with CUDA (tested with CUDA 8.0).
